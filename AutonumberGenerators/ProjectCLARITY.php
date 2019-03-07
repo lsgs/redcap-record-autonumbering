@@ -28,10 +28,6 @@ class ProjectCLARITY extends AbstractAutonumberGenerator {
                 'C0' => 787
         );
         
-        public function getRequiredDataEntryFields() {        
-                return $this->requiredFields;
-        }
-        
         /**
          * Only onfig required is the names of the required fields
          */
@@ -101,5 +97,13 @@ class ProjectCLARITY extends AbstractAutonumberGenerator {
         
         public function idMatchesExpectedPattern($id) {
                 return preg_match(static::PATTERN, $id);
+        }
+
+        public function requireDAG() {
+                return false;
+        }
+
+        public function getRequiredDataEntryFields() {        
+                return $this->requiredFields;
         }
 }

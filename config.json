@@ -17,7 +17,8 @@
             "redcap_add_edit_records_page",
             "redcap_data_entry_form_top",
             "redcap_every_page_before_render",
-            "redcap_every_page_top"
+            "redcap_every_page_top",
+            "redcap_save_record"
 	],
 
         "enable-every-page-hooks-on-system-pages": false,

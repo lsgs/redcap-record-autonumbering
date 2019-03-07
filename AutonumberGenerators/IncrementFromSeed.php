@@ -56,4 +56,12 @@ class IncrementFromSeed extends AbstractAutonumberGenerator {
         public function idMatchesExpectedPattern($id) {
                 return preg_match(static::PATTERN, $id);
         }
+
+        public function requireDAG() {
+                return false;
+        }
+
+        public function getRequiredDataEntryFields() {        
+                return array();
+        }
 }
