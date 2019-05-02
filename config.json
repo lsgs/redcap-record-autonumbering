@@ -31,8 +31,7 @@
 			"key": "project-setup-dialog-text",
 			"name": "Project Setup page dialog box text",
 			"required": true,
-			"type": "text",
-			"default": "REDCap's built-in record auto-numbering is being overridden by the \"Custom Record Auto-numbering\" External Module."
+			"type": "text"
 		}
 	],
 
