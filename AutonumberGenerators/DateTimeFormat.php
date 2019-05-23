@@ -38,4 +38,12 @@ class DateTimeFormat extends AbstractAutonumberGenerator {
         public function idMatchesExpectedPattern($id) {
                 return false!==DateTime::createFromFormat($this->config['option-setting-date-time-format'], $id);
         }
+
+        public function requireDAG() {
+                return false;
+        }
+
+        public function getRequiredDataEntryFields() {        
+                return array();
+        }
 }

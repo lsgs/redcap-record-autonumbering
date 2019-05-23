@@ -2,8 +2,18 @@
 /**
  * REDCap External Module: Record Autonumber
  * Specify record auto-numbering rules e.g. including part of DAG name, date format
- * Does not work for records created via survey response.
+ * Does not work for records created via survey response or randomisation.
  * @author Luke Stevens, Murdoch Children's Research Institute
+ * 
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * TODO
+ * 
+ * http://php.net/manual/en/function.override-function.php autoIncSet()
+ * 
+ * When enabling check that all custom classes used (read project settings) are 
+ * present in AutonumberGenerators directory
+ *  - do not permit enabling without that!
+ *  - is it automateable?
  */
 namespace MCRI\RecordAutonumber;
 
@@ -20,11 +30,9 @@ use REDCap;
 class RecordAutonumber extends AbstractExternalModule
 {
         const TEMP_RECORD_STEM = 'auto_';
-        const RETRY_DELAY_SEC = 1;
-        const RETRY_ATTEMPTS = 10;
         const MODULE_VARNAME = 'MCRI_Record_Autonumber';
         const DAG_ELEMENT_NAME = '__GROUPID__';
-
+        
         private $autonumberGenerator;
         
         private $lang;
@@ -33,16 +41,18 @@ class RecordAutonumber extends AbstractExternalModule
         private $super_user;
         private $user;
         private $user_rights;
-        
+
         public function __construct() {
                 parent::__construct();
-                global $lang, $user_rights;
-                $this->lang = $lang;
-                $this->page = PAGE;//(defined(PAGE)) ? PAGE : null;
-                $this->project_id = intval(PROJECT_ID);//(defined(PROJECT_ID)) ? intval(PROJECT_ID) : null;
-                $this->super_user = SUPER_USER;//(defined(SUPER_USER)) ? SUPER_USER : null;
-                $this->user = strtolower(USERID);//(defined(USERID)) ? strtolower(USERID) : null;
-                $this->user_rights = $user_rights;
+                global $Proj, $lang, $user_rights;
+                $this->page = PAGE;
+                $this->project_id = intval(PROJECT_ID);
+                $this->super_user = SUPER_USER;
+                $this->user = strtolower(USERID);
+                $this->Proj = $Proj;
+                $this->lang = &$lang;
+                $this->user_rights = &$user_rights;
+                $this->autonumberGenerator = null;
                 
                 if ($this->project_id > 0) {
                         try {
@@ -64,11 +74,20 @@ class RecordAutonumber extends AbstractExternalModule
                                                 unset($autonumberSettings['option-setting-custom-class-name']);
                                         }
 
-                                        if ($autonumberClassName!=='') {
+                                        if ($autonumberClassName!=='') { // ... and is configured
                                                 $this->autonumberGenerator = AutonumberGeneratorFactory::make(
                                                         $autonumberClassName,
                                                         $autonumberSettings
                                                 );
+                                        }
+                                } else {
+                                        // not enabled - currently enabling so ensure project setting is autonumbering
+                                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($this->project_id);
+                                        $q = db_query($sql);
+//                                        if (db_affected_rows()==1) {
+                                        $nrows = db_affected_rows();
+                                        if ($nrows==1) {
+                            			\Logging::logEvent($sql,"redcap_projects","MANAGE",$this->project_id,"project_id = $this->project_id","Modify project settings");
                                         }
                                 }
                         } catch (AutonumberConfigException $e) {
@@ -79,21 +98,23 @@ class RecordAutonumber extends AbstractExternalModule
         
         /**
          * redcap_every_page_top
-         * Perform two functions:
-         * 1. Alter the ProjectSetup page's "auto-numbering" button to indicate
+         * Perform three functions:
+         * 1. ProjectSetup page: alter  "auto-numbering" button to indicate
          *    usage of this module.
-         * 2. Detect auto-number generation error and display dialog box to 
+         * 2. ExternalModules/manager/project auto-open config when selected 
+         *    "Configure" from ProjectSetup page button
+         * 3. Detect auto-number generation error and display dialog box to 
          *    inform user
          * @param int project_id
          */
         public function redcap_every_page_top($project_id) {
             
-                if (defined(USERID) && isset($this->project_id) && $this->project_id > 0) {
+                if (defined('USERID') && isset($this->project_id) && $this->project_id > 0) {
                         if (strpos($this->page, 'ProjectSetup/index.php')!==false) {
                                 $this->includeProjectSetupPageContent();
                         } else if (strpos($this->page, 'ExternalModules/manager/project.php')>0) {
                                 $this->includeModuleManagerPageContent();
-                        }
+                        } 
                         if ($this->crossPageMessageIsSet()) {
                                 $this->includeMessagePopup($this->getCrossPageMessage());
                                 $this->clearCrossPageMessage();
@@ -112,7 +133,7 @@ class RecordAutonumber extends AbstractExternalModule
         public function redcap_every_page_before_render($project_id) {
                 // is this is a new data entry record (not survey) that is not yet saved?
                 if ($this->page==='DataEntry/index.php' && isset($_POST['submit-action']) && $_POST['submit-action']!=='submit-btn-cancel') {
-                        $pkField=REDCap::getRecordIdField();
+                        $pkField = REDCap::getRecordIdField();
                         $postRec = $_POST[$pkField];
                         if (isset($postRec) && !$this->recordExists($postRec)) {
                                 try {
@@ -127,8 +148,22 @@ class RecordAutonumber extends AbstractExternalModule
                                         $msg = 'Auto-number generation failed: '.$e->getMessage();
                                         $this->handleAutonumberException($postRec, $msg);
                                 }
+                                unset($_GET['auto']);
                                 // continue and save record (with default, temp id if could not generate)...
                         }
+                }
+                else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
+
+                        if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
+                                $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
+                                $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
+                        } else {
+                                $armFirstEventId = $this->Proj->firstEventId;
+                                $armFirstForm = $this->Proj->firstForm;
+                        }
+                        $tempRecId = $_GET['id'];
+                        $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
+                        redirect( $gotoUrl);
                 }
         }
         
@@ -140,32 +175,15 @@ class RecordAutonumber extends AbstractExternalModule
 
         /**
          * redcap_add_edit_records_page
-         * Augment the "Add new record" button:
-         *  1. Onclick navigate to first form instead of pointless record_home
-         *  2. Disable if error in module configuration
+         * Disable "Add new record" if error in module configuration
          */
         public function redcap_add_edit_records_page($project_id, $instrument, $event_id) {
-                if ($this->user_rights['record_create']) {
+                if ($this->user_rights['record_create'] && !isset($this->autonumberGenerator)) {
                         ?>
-                        <script type='text/javascript'>$(document).ready( function() { $('button:contains("<?php echo $lang['data_entry_46'];?>")')
-                        <?php
-                        if (isset($this->autonumberGenerator)) {
-                                global $Proj;
-                                if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $Proj->events)) {
-                                        $armFirstEventId = key($Proj->events[$_GET['arm']]['events']);
-                                        $armFirstForm = $Proj->eventsForms[$armFirstEventId][0];
-                                } else {
-                                        $armFirstEventId = $Proj->firstEventId;
-                                        $armFirstForm = $Proj->firstForm;
-                                }
-                                $tempRecId = self::TEMP_RECORD_STEM.intval(microtime(true));
-                                $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
-                                ?>.removeAttr('onclick').off('click').unbind('click').on('click', function () { window.location.href='<?php echo $gotoUrl;?>';return false;});<?php 
-                        } else {
-                                ?>.prop('disabled', 'disabled').attr('title', 'Fix the module configuration first!');<?php
-                        }
-                        ?>
-                        });
+                        <script type='text/javascript'>
+                            $(document).ready( function() { 
+                                $('button:contains("<?php echo $this->lang['data_entry_46'];?>")').prop('disabled', 'disabled').attr('title', 'Fix the module configuration first!');
+                            });
                         </script>
                         <?php
                 }
@@ -178,6 +196,7 @@ class RecordAutonumber extends AbstractExternalModule
          *  2. Prevent submit when essential data (e.g. DAG) is missing
          */
         public function redcap_data_entry_form_top($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) {
+                if (is_null($this->autonumberGenerator) || !is_subclass_of($this->autonumberGenerator, 'MCRI\RecordAutonumber\AbstractAutonumberGenerator')) { return; }
                 if ($this->user_rights['record_create'] &&
                     !$this->recordExists($record)) {
                         $this->includeDataEntryPageContent();
@@ -191,7 +210,7 @@ class RecordAutonumber extends AbstractExternalModule
          * it.
          * NOT YET IMPLEMENTED
          */
-        protected function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
+        public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
                 //
         }
         
@@ -201,14 +220,15 @@ class RecordAutonumber extends AbstractExternalModule
         }
         
         protected function getNextRecordId() {
-                for ($i = 0; $i < self::RETRY_ATTEMPTS; $i++) {
+                do {
                         $nextId = $this->autonumberGenerator->getNextRecordId();
                         if ($this->autonumberGenerator->idMatchesExpectedPattern($nextId) &&
                             !$this->recordExists($nextId)) {
                                 return $nextId;
                         }
-                        sleep(/*($i+1)**/self::RETRY_DELAY_SEC);
-                }
+                        sleep($this->autonumberGenerator->getRetryDelay());
+                } while ($this->autonumberGenerator->canRetry());
+
                 throw new AutonumberGenerateFailedException('Attempts to generate new unique record id number on save timed out.');
         }
         
