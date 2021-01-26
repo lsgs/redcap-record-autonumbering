@@ -16,14 +16,6 @@ use REDCap;
 class DAGIncrement extends AbstractAutonumberGenerator {
         const PATTERN = '/^\w+.*\d+$/';
         
-        /**
-         * Require selection of DAG for new records?
-         * @return boolean
-         */
-        public function requireDAG() {
-                return true;
-        }
-
         protected function validateConfiguration() {
                 // check additional param contains the info expected :
                 // 1. chars from dag name
@@ -123,5 +115,17 @@ class DAGIncrement extends AbstractAutonumberGenerator {
         
         public function idMatchesExpectedPattern($id) {
                 return preg_match(static::PATTERN, $id);
+        }
+
+        /**
+         * Require selection of DAG for new records?
+         * @return boolean
+         */
+        public function requireDAG() {
+                return true;
+        }
+
+        public function getRequiredDataEntryFields() {        
+                return array();
         }
 }

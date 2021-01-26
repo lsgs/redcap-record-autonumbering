@@ -12,7 +12,12 @@ namespace MCRI\RecordAutonumber;
  * @author luke.stevens
  */
 abstract class AbstractAutonumberGenerator {
+        protected static $MaxRetryPeriod = 99;
+        protected static $RequireDAG = false;
+        protected static $RequiredFields = array();
         protected $config;
+        private $retryDelay = 1;
+        private $totalRetryTime = 0;
 
         public function __construct($config) {
                 try {
@@ -48,9 +53,7 @@ abstract class AbstractAutonumberGenerator {
          * Require selection of DAG for new records?
          * @return boolean
          */
-        public function requireDAG() {
-                return false;
-        }
+        abstract public function requireDAG();
         
         /**
          * Return array of field names that are required for generating the 
@@ -58,9 +61,28 @@ abstract class AbstractAutonumberGenerator {
          * E.g. array('__GROUPID__','diagnosis')
          * @return array
          */
-        public function getRequiredDataEntryFields() {
-                return array();
-        }        
+        abstract public function getRequiredDataEntryFields();
+        
+        /**
+         * canRetry()
+         * Can we retry getNextRecordId() or should we now give up and use the
+         * default record id?
+         * @return boolean
+         */
+        public function canRetry() {
+                $thisDelay = $this->retryDelay;
+                $this->totalRetryTime =+ $thisDelay;
+                $this->retryDelay = 10+$this->retryDelay;
+                return $this->totalRetryTime < static::$MaxRetryPeriod;
+        }
+        
+        /**
+         * getRetryDelay()
+         * @return int retry delay in seconds
+         */
+        public function getRetryDelay() {
+                return $this->retryDelay;
+        }
         
         private static function getClassNameWithoutNamespace() {
                 $classname = get_called_class();
