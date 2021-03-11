@@ -55,6 +55,8 @@ class RecordAutonumber extends AbstractExternalModule
                 $this->autonumberGenerator = null;
                 
                 if ($this->project_id > 0) {
+                        // Do not attempt any configuration unless the module is enabled
+                        if (!$this->getProjectSettings()['enabled']['value']) return;
                         try {
                                 // read all the config options
                                 $settingsArray = $this->getProjectSettings($this->project_id);
