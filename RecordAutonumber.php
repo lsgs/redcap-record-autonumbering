@@ -55,45 +55,48 @@ class RecordAutonumber extends AbstractExternalModule
                 $this->autonumberGenerator = null;
                 
                 if ($this->project_id > 0) {
-                        // Do not attempt any configuration unless the module is enabled
-                        if (!$this->getProjectSettings()['enabled']['value']) return;
+                        // read all the config options
+                        $settingsArray = $this->getProjectSettings($this->project_id);
+
+                        // only create object when module is actually enabled for project!
+                        if (!$settingsArray['enabled']['value']) return;
+
                         try {
-                                // read all the config options
-                                $settingsArray = $this->getProjectSettings($this->project_id);
-                                
-                                if ($settingsArray['enabled']['value']) { // only create object when module is actually enabled for project!
-                                        $autonumberClassName = '';
-                                        foreach ($settingsArray as $settingKey => $settingValues) {
-                                                if ($settingKey==='autonumber-option') {
-                                                        $autonumberClassName = $settingValues['value'];
-                                                } else if (strpos($settingKey, 'option-setting-')===0) {
-                                                        $autonumberSettings[$settingKey] = $settingValues['value'];
-                                                }
-                                        }
 
-                                        if ($autonumberClassName==='Custom') {
-                                                $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
-                                                unset($autonumberSettings['option-setting-custom-class-name']);
+                                $autonumberClassName = '';
+                                foreach ($settingsArray as $settingKey => $settingValues) {
+                                        if ($settingKey==='autonumber-option') {
+                                                $autonumberClassName = $settingValues['value'];
+                                        } else if (strpos($settingKey, 'option-setting-')===0) {
+                                                $autonumberSettings[$settingKey] = $settingValues['value'];
                                         }
+                                }
 
-                                        if ($autonumberClassName!=='') { // ... and is configured
-                                                $this->autonumberGenerator = AutonumberGeneratorFactory::make(
-                                                        $autonumberClassName,
-                                                        $autonumberSettings
-                                                );
-                                        }
-                                } else {
-                                        // not enabled - currently enabling so ensure project setting is autonumbering
-                                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($this->project_id);
-                                        $q = db_query($sql);
-//                                        if (db_affected_rows()==1) {
-                                        $nrows = db_affected_rows();
-                                        if ($nrows==1) {
-                            			\Logging::logEvent($sql,"redcap_projects","MANAGE",$this->project_id,"project_id = $this->project_id","Modify project settings");
-                                        }
+                                if ($autonumberClassName==='Custom') {
+                                        $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
+                                        unset($autonumberSettings['option-setting-custom-class-name']);
+                                }
+
+                                if ($autonumberClassName!=='') { // ... and is configured
+                                        $this->autonumberGenerator = AutonumberGeneratorFactory::make(
+                                                $autonumberClassName,
+                                                $autonumberSettings
+                                        );
                                 }
                         } catch (AutonumberConfigException $e) {
                                 $this->setCrossPageMessage($e->getMessage());
+                        }
+                }
+        }
+
+        function redcap_module_project_enable($version, $project_id) {
+                // Turn record autonumbering on if it is not already on
+                if (!$Proj->project['auto_inc_set']) {
+                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($project_id);
+                        $q = db_query($sql);
+                        $nrows = db_affected_rows();
+                        if ($nrows==1) {
+                                \Logging::logEvent($sql,"redcap_projects","MANAGE",$project_id,"project_id = $project_id","Modify project settings");
                         }
                 }
         }
