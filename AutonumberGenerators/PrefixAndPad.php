@@ -25,11 +25,10 @@ class PrefixAndPad extends AbstractAutonumberGenerator {
                 $prefixOpt = 'option-setting-prefixandpad-prefix';
                 $padlenOpt = 'option-setting-prefixandpad-padlen';
                 
-                if (!array_key_exists($prefixOpt, $this->config)) {
-                        throw new AutonumberConfigException('Prefix configuration required');
-                }
-                if (!empty($this->config[$prefixOpt])) {
+                if (array_key_exists($prefixOpt, $this->config)) {
                         $this->prefix = trim($this->config[$prefixOpt]);
+                } else {
+                        $this->prefix = '';
                 } 
             
                 if (!array_key_exists($padlenOpt, $this->config)) {
