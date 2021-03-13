@@ -29,7 +29,6 @@ use REDCap;
  */
 class RecordAutonumber extends AbstractExternalModule
 {
-        const TEMP_RECORD_STEM = 'auto_';
         const MODULE_VARNAME = 'MCRI_Record_Autonumber';
         const DAG_ELEMENT_NAME = '__GROUPID__';
         
@@ -169,6 +168,13 @@ class RecordAutonumber extends AbstractExternalModule
                                 unset($_GET['auto']);
                                 // continue and save record (with default, temp id if could not generate)...
                         }
+
+                } else if ($this->page==='Randomization/randomize_record.php' && isset($_POST['action']) && $_POST['action']==='randomize') {
+                        if (!$this->recordExists($_POST['record'])) {
+                                // this is a record being created by the "Randomize" action
+                                // Rename after randomise does not work as can't get new record id back to front end
+                                $_GET['auto'] = 1; // this is not set automatically for records created this way - this will be detected later in redcap_record_save and the record renamed
+                        }
                 }
         }
         
@@ -209,14 +215,29 @@ class RecordAutonumber extends AbstractExternalModule
         }
 
         /**
-         * When records are created by a survey response, it is not possible to 
-         * prevent integer incrementing. The only way to generate custom record
-         * numbers is to catch a new record after it is first saved and rename
-         * it.
+         * When records are created by a survey response or randomisation, it is not possible to prevent integer incrementing. 
+         * Below is unsuccessful attempt to catch a new record after it is first saved and rename it.
+         * Can't get it to return new rec id in randomisation confirmation dialog and update page (so saves with default autonumber)
          * NOT YET IMPLEMENTED
          */
         public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
-                //
+                if ($this->page==='Randomization/randomize_record.php' && isset($_GET['auto'])) {
+                        try {
+                                $new_record = $this->getNextRecordId();
+                                \DataEntry::changeRecordId($record, $new_record);
+                        } catch (AutonumberGenerateFailedException $e) {
+                                $msg = 'Could not generate record number in the expected format: '.$e->getMessage();
+                                $this->handleAutonumberException($record, $msg);
+                        } catch (AutonumberMissingInputException $e) {
+                                $msg = 'Could not generate record number due to missing required data: '.$e->getMessage();
+                                $this->handleAutonumberException($record, $msg);
+                        } catch (RecordAutonumberException $e) {
+                                $msg = 'Auto-number generation failed: '.$e->getMessage();
+                                $this->handleAutonumberException($record, $msg);
+                        }
+                        unset($_GET['auto']);
+                        $_POST[REDCap::getRecordIdField()] = $new_record;
+                }
         }
         
         protected function recordExists($recId) {
@@ -253,9 +274,11 @@ class RecordAutonumber extends AbstractExternalModule
                 $disabled = (SUPER_USER || $this->user_rights['design']==='1') ? '' : 'disabled=""';
                 ?>
                 <div id="emAutoNumConfigDiv" style="text-indent:-75px;margin-left:75px;margin-bottom:2px;color:green;display:none;">
-                    <button class="btn btn-defaultrc btn-xs fs11" id="emAutoNumConfigBtn" <?php echo $disabled;?>>Configure</button>
-                    <img src="<?php echo APP_PATH_IMAGES;?>accept.png" style="margin-left:8px;">
-                    <?php echo $this->lang['setup_94'];?><img src="<?php echo APP_PATH_IMAGES;?>puzzle_small.png" style="margin-left:5px;"><a href="javascript:;" class="help" title="Tell me more" id="emAutoNumQuestionDialog">?</a>
+                    <button class="btn btn-defaultrc btn-xs fs11" style="min-width:49px;" id="emAutoNumConfigBtn" <?=$disabled?>><?=$this->lang['rights_142']?></button>
+                    <i class="ml-1 fas fa-check-circle" style="text-indent:0;"></i>
+                    <?=$this->lang['setup_94']?>
+                    <i class="fas fa-cube ml-1" style="text-indent:0;"></i>
+                    <a href="javascript:;" class="help" title="Tell me more" id="emAutoNumQuestionDialog">?</a>
                 </div>
                 <script type="text/javascript">
                     $(document).ready(function() {
@@ -265,7 +288,7 @@ class RecordAutonumber extends AbstractExternalModule
                         $('#emAutoNumQuestionDialog').click(function() {
                             simpleDialog(
                                 '<div title="<?php echo REDCap::escapeHtml($this->getModuleName());?>"><?php echo REDCap::escapeHtml($this->getProjectSetting('project-setup-dialog-text'));?></div>',
-                                '<img src="'+app_path_images+'puzzle_small.png"/> <?php echo REDCap::escapeHtml($this->getModuleName());?>'
+                                '<i class="fas fa-cube mr-1"></i><?php echo REDCap::escapeHtml($this->getModuleName());?>'
                             );
                         });
                         $('button[onclick*="auto_inc_set"]').parent('div').replaceWith($('#emAutoNumConfigDiv'));
