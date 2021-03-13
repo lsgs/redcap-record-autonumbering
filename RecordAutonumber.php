@@ -7,11 +7,9 @@
  * 
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  * TODO
- * 
- * http://php.net/manual/en/function.override-function.php autoIncSet()
- * 
- * When enabling check that all custom classes used (read project settings) are 
- * present in AutonumberGenerators directory
+ * 1. Randomisation - can't find a satisfatory way to generate autonumber or rename on randomisation, so how about hiding "Randomize" button until after record saved?
+ * 2. Replace built-in autoIncSet() somehow? http://php.net/manual/en/function.override-function.php 
+ * 3. When enabling check that all custom classes used (read project settings) are present in AutonumberGenerators directory
  *  - do not permit enabling without that!
  *  - is it automateable?
  */
