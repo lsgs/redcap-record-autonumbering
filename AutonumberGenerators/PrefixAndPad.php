@@ -91,4 +91,8 @@ class PrefixAndPad extends AbstractAutonumberGenerator {
         public function requireDAG() {
                 return false;
         }
+
+        public function getRequiredDataEntryFields() {
+                return array();
+        }
 }
