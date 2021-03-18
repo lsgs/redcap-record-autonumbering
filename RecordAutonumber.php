@@ -388,22 +388,24 @@ class RecordAutonumber extends AbstractExternalModule
     };
 
 
-    $('#center').on('mouseover', function() {
-        // Adjust the Save button click events 
-        if (!attachedListeners) {
-                attachedListeners = true;
-                var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
-                $.each(saveBtns, function ( btnIndex, thisBtn ) {
-                        // Alter the onclick event of the button to our custom save function
-                        $(thisBtn).onclick = null;
-                        // .off('click') removes/unbinds event click event listeners, it might not be required
-                        $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click'); // make sure!
-                        $(thisBtn).click(function() {
-                                customSaveForm(thisBtn);
-                                return false;
-                        });
-                });
-        }
+    $(window).on('load', function() {
+        $('#center').on('mousemove', function() {
+            // Adjust the Save button click events 
+            if (!attachedListeners) {
+                    attachedListeners = true;
+                    var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
+                    $.each(saveBtns, function ( btnIndex, thisBtn ) {
+                            // Alter the onclick event of the button to our custom save function
+                            $(thisBtn).onclick = null;
+                            // .off disables any click event listeners
+                            $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click');
+                            $(thisBtn).click(function() {
+                                    customSaveForm(thisBtn);
+                                    return false;
+                            });
+                    });
+            }
+        });
     });
 }());
 </script>
