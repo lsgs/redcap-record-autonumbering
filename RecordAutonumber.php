@@ -360,6 +360,7 @@ class RecordAutonumber extends AbstractExternalModule
 <script type='text/javascript'>
 (function() {
     var requiredFields = JSON.parse('<?php echo json_encode($requiredFields);?>');   
+    var attachedListeners = false;
     
     // Check required fields are set (alert and stop if not) before saving
     var customSaveForm = function (sendOb) {
@@ -387,18 +388,22 @@ class RecordAutonumber extends AbstractExternalModule
     };
 
 
-    $(window).on('load', function() {
+    $('#center').on('mouseover', function() {
         // Adjust the Save button click events 
-        var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
-        $.each(saveBtns, function ( btnIndex, thisBtn ) {
-            // Alter the onclick event of the button to our custom save function
-            $(thisBtn).onclick = null;
-            $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click'); // make sure!
-            $(thisBtn).click(function() {
-                customSaveForm(thisBtn);
-                return false;
-            });
-        });
+        if (!attachedListeners) {
+                attachedListeners = true;
+                var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
+                $.each(saveBtns, function ( btnIndex, thisBtn ) {
+                        // Alter the onclick event of the button to our custom save function
+                        $(thisBtn).onclick = null;
+                        // .off('click') removes/unbinds event click event listeners, it might not be required
+                        $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click'); // make sure!
+                        $(thisBtn).click(function() {
+                                customSaveForm(thisBtn);
+                                return false;
+                        });
+                });
+        }
     });
 }());
 </script>
