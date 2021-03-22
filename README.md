@@ -1,6 +1,6 @@
 # Custom Record Auto-Numbering
 
-This module allows users to create a custom record auto-numbering schema for their REDCap project.
+This module allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.
 
 ## Motivation
 
@@ -34,6 +34,4 @@ This module introduces a range of additional options, such as having the first r
 1. **Unix timestamp (16 digits)**: This option will create a record ID based upon a Unix timestamp. A Unix timestamp is the number of seconds since January 1st, 1970 (UTC).
   - See: <https://www.unixtimestamp.com/> for more information about Unix timestamps.
 
-1. **A project-specific custom auto-numbering schema**: An advanced option requiring knowledge of PHP and module development. Not explained.
-
-For a more detailed explanation, see the [Custom Record Auto-numbering User Guide](docs/custom_record_auto-numbering_user_guide.pdf)
+1. **A project-specific custom auto-numbering schema**: The module design supports the addition of novel auto-numbering schemes via custom code. This is an advanced feature for module developers.
