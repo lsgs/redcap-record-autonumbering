@@ -3,6 +3,15 @@ All notable changes to the Record Autonumbering module will be documented in thi
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.0.502] - 2021-03-22
+### Added
+- Revise module description in config.json to align with README (Philip Chase)
+- Update README based on Taryn Stoff's user guide (Kyle Chesney, Taryn Stoffs)
+- Fix DAG form-save bug (mbentz)
+- Fix crash of module when using "padded integer increment with prefix" caused by abstract method getRequiredDataEntryFields needing declaration (Kyle Chesney)
+- Ensure module is enabled before initializing to prevent REDCap core's autonumbering enabling in *every* project (Kyle Chesney)
+
+
 ## [0.0.501] - 2020-12-09
 ### Added
 - Redirect with js (Luke)
