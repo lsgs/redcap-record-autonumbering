@@ -35,3 +35,5 @@ This module introduces a range of additional options, such as having the first r
   - See: <https://www.unixtimestamp.com/> for more information about Unix timestamps.
 
 1. **A project-specific custom auto-numbering schema**: The module design supports the addition of novel auto-numbering schemes via custom code. This is an advanced feature for module developers.
+
+For a more detailed explanation, see the [Custom Record Auto-numbering User Guide](https://www.ctsi.ufl.edu/wordpress/files/2021/04/Custom-Record-Auto-numbering-External-Module-User-Guide.pdf) created by Taryn Stoffs.
