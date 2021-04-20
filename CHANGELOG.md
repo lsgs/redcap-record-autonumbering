@@ -3,6 +3,11 @@ All notable changes to the Record Autonumbering module will be documented in thi
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [0.0.503] - 2021-04-20
+### Added
+- Add Taryn Stoff's user guide to README (Kyle Chesney)
+
+
 ## [0.0.502] - 2021-03-22
 ### Added
 - Revise module description in config.json to align with README (Philip Chase)
