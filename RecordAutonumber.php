@@ -29,7 +29,6 @@ use REDCap;
  */
 class RecordAutonumber extends AbstractExternalModule
 {
-        const TEMP_RECORD_STEM = 'auto_';
         const MODULE_VARNAME = 'MCRI_Record_Autonumber';
         const DAG_ELEMENT_NAME = '__GROUPID__';
         
@@ -145,10 +144,8 @@ class RecordAutonumber extends AbstractExternalModule
 
         /**
          * redcap_every_page_before_render
-         * Detect when new record is being saved and attempt to generate a new
-         * record id.
-         * I.e. data entry form page has been sumbmitted and is reloading after
-         * the submit POST.
+         * Detect when new record is being saved and attempt to generate a new record id.
+         * I.e. data entry form page has been sumbmitted and is reloading after the submit POST.
          * @param int project_id
          */
         public function redcap_every_page_before_render($project_id) {
@@ -172,6 +169,7 @@ class RecordAutonumber extends AbstractExternalModule
                                 unset($_GET['auto']);
                                 // continue and save record (with default, temp id if could not generate)...
                         }
+
                 }
                 else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
 
@@ -225,14 +223,12 @@ class RecordAutonumber extends AbstractExternalModule
         }
 
         /**
-         * When records are created by a survey response, it is not possible to 
-         * prevent integer incrementing. The only way to generate custom record
-         * numbers is to catch a new record after it is first saved and rename
-         * it.
+         * When records are created by a survey response or randomisation, it is not possible to prevent integer incrementing. 
+         * Branch auto-on-randomise is unsuccessful attempt to catch a new record after it is first saved and rename it.
+         * Can't get it to return new rec id in randomisation confirmation dialog and update page (so saves with default autonumber)
          * NOT YET IMPLEMENTED
          */
         public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
-                //
         }
         
         protected function recordExists($recId) {
@@ -269,9 +265,11 @@ class RecordAutonumber extends AbstractExternalModule
                 $disabled = (SUPER_USER || $this->user_rights['design']==='1') ? '' : 'disabled=""';
                 ?>
                 <div id="emAutoNumConfigDiv" style="text-indent:-75px;margin-left:75px;margin-bottom:2px;color:green;display:none;">
-                    <button class="btn btn-defaultrc btn-xs fs11" id="emAutoNumConfigBtn" <?php echo $disabled;?>>Configure</button>
-                    <img src="<?php echo APP_PATH_IMAGES;?>accept.png" style="margin-left:8px;">
-                    <?php echo $this->lang['setup_94'];?><img src="<?php echo APP_PATH_IMAGES;?>puzzle_small.png" style="margin-left:5px;"><a href="javascript:;" class="help" title="Tell me more" id="emAutoNumQuestionDialog">?</a>
+                    <button class="btn btn-defaultrc btn-xs fs11" style="min-width:49px;" id="emAutoNumConfigBtn" <?=$disabled?>><?=$this->lang['rights_142']?></button>
+                    <i class="ml-1 fas fa-check-circle" style="text-indent:0;"></i>
+                    <?=$this->lang['setup_94']?>
+                    <i class="fas fa-cube ml-1" style="text-indent:0;"></i>
+                    <a href="javascript:;" class="help" title="Tell me more" id="emAutoNumQuestionDialog">?</a>
                 </div>
                 <script type="text/javascript">
                     $(document).ready(function() {
@@ -281,7 +279,7 @@ class RecordAutonumber extends AbstractExternalModule
                         $('#emAutoNumQuestionDialog').click(function() {
                             simpleDialog(
                                 '<div title="<?php echo REDCap::escapeHtml($this->getModuleName());?>"><?php echo REDCap::escapeHtml($this->getProjectSetting('project-setup-dialog-text'));?></div>',
-                                '<img src="'+app_path_images+'puzzle_small.png"/> <?php echo REDCap::escapeHtml($this->getModuleName());?>'
+                                '<i class="fas fa-cube mr-1"></i><?php echo REDCap::escapeHtml($this->getModuleName());?>'
                             );
                         });
                         $('button[onclick*="auto_inc_set"]').parent('div').replaceWith($('#emAutoNumConfigDiv'));
