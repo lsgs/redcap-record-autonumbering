@@ -11,17 +11,18 @@
 		}
 	],
 
-	"description": "Various configurable and extensible options for record auto-numbering. Applies to records created by a logged in user, i.e. not via a public survey or API/CSV data import.",
+	"description": "Allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.",
 
 	"permissions": [
-            "redcap_add_edit_records_page",
-            "redcap_data_entry_form_top",
-            "redcap_every_page_before_render",
-            "redcap_every_page_top",
-            "redcap_save_record"
+		"redcap_add_edit_records_page",
+		"redcap_data_entry_form_top",
+		"redcap_every_page_before_render",
+		"redcap_every_page_top",
+		"redcap_save_record",
+		"redcap_module_project_enable"
 	],
 
-        "enable-every-page-hooks-on-system-pages": false,
+	"enable-every-page-hooks-on-system-pages": false,
 
 	"links": {
 	},
