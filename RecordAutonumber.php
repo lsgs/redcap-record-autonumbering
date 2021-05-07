@@ -54,45 +54,48 @@ class RecordAutonumber extends AbstractExternalModule
                 $this->autonumberGenerator = null;
                 
                 if ($this->project_id > 0) {
-                        // Do not attempt any configuration unless the module is enabled
-                        if (!$this->getProjectSettings()['enabled']['value']) return;
+                        // read all the config options
+                        $settingsArray = $this->getProjectSettings($this->project_id);
+
+                        // only create object when module is actually enabled for project!
+                        if (!$settingsArray['enabled']['value']) return;
+
                         try {
-                                // read all the config options
-                                $settingsArray = $this->getProjectSettings($this->project_id);
-                                
-                                if ($settingsArray['enabled']['value']) { // only create object when module is actually enabled for project!
-                                        $autonumberClassName = '';
-                                        foreach ($settingsArray as $settingKey => $settingValues) {
-                                                if ($settingKey==='autonumber-option') {
-                                                        $autonumberClassName = $settingValues['value'];
-                                                } else if (strpos($settingKey, 'option-setting-')===0) {
-                                                        $autonumberSettings[$settingKey] = $settingValues['value'];
-                                                }
-                                        }
 
-                                        if ($autonumberClassName==='Custom') {
-                                                $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
-                                                unset($autonumberSettings['option-setting-custom-class-name']);
+                                $autonumberClassName = '';
+                                foreach ($settingsArray as $settingKey => $settingValues) {
+                                        if ($settingKey==='autonumber-option') {
+                                                $autonumberClassName = $settingValues['value'];
+                                        } else if (strpos($settingKey, 'option-setting-')===0) {
+                                                $autonumberSettings[$settingKey] = $settingValues['value'];
                                         }
+                                }
 
-                                        if ($autonumberClassName!=='') { // ... and is configured
-                                                $this->autonumberGenerator = AutonumberGeneratorFactory::make(
-                                                        $autonumberClassName,
-                                                        $autonumberSettings
-                                                );
-                                        }
-                                } else {
-                                        // not enabled - currently enabling so ensure project setting is autonumbering
-                                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($this->project_id);
-                                        $q = db_query($sql);
-//                                        if (db_affected_rows()==1) {
-                                        $nrows = db_affected_rows();
-                                        if ($nrows==1) {
-                            			\Logging::logEvent($sql,"redcap_projects","MANAGE",$this->project_id,"project_id = $this->project_id","Modify project settings");
-                                        }
+                                if ($autonumberClassName==='Custom') {
+                                        $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
+                                        unset($autonumberSettings['option-setting-custom-class-name']);
+                                }
+
+                                if ($autonumberClassName!=='') { // ... and is configured
+                                        $this->autonumberGenerator = AutonumberGeneratorFactory::make(
+                                                $autonumberClassName,
+                                                $autonumberSettings
+                                        );
                                 }
                         } catch (AutonumberConfigException $e) {
                                 $this->setCrossPageMessage($e->getMessage());
+                        }
+                }
+        }
+
+        function redcap_module_project_enable($version, $project_id) {
+                // Turn record autonumbering on if it is not already on
+                if (!$Proj->project['auto_inc_set']) {
+                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($project_id);
+                        $q = db_query($sql);
+                        $nrows = db_affected_rows();
+                        if ($nrows==1) {
+                                \Logging::logEvent($sql,"redcap_projects","MANAGE",$project_id,"project_id = $project_id","Modify project settings");
                         }
                 }
         }
@@ -167,6 +170,19 @@ class RecordAutonumber extends AbstractExternalModule
                                 // continue and save record (with default, temp id if could not generate)...
                         }
 
+                }
+                else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
+
+                        if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
+                                $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
+                                $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
+                        } else {
+                                $armFirstEventId = $this->Proj->firstEventId;
+                                $armFirstForm = $this->Proj->firstForm;
+                        }
+                        $tempRecId = $_GET['id'];
+                        $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
+                        redirect( $gotoUrl);
                 }
         }
         
@@ -342,6 +358,7 @@ class RecordAutonumber extends AbstractExternalModule
 <script type='text/javascript'>
 (function() {
     var requiredFields = JSON.parse('<?php echo json_encode($requiredFields);?>');   
+    var attachedListeners = false;
     
     // Check required fields are set (alert and stop if not) before saving
     var customSaveForm = function (sendOb) {
@@ -370,16 +387,22 @@ class RecordAutonumber extends AbstractExternalModule
 
 
     $(window).on('load', function() {
-        // Adjust the Save button click events 
-        var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
-        $.each(saveBtns, function ( btnIndex, thisBtn ) {
-            // Alter the onclick event of the button to our custom save function
-            $(thisBtn).onclick = null;
-            $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click'); // make sure!
-            $(thisBtn).click(function() {
-                customSaveForm(thisBtn);
-                return false;
-            });
+        $('#center').on('mousemove', function() {
+            // Adjust the Save button click events 
+            if (!attachedListeners) {
+                    attachedListeners = true;
+                    var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
+                    $.each(saveBtns, function ( btnIndex, thisBtn ) {
+                            // Alter the onclick event of the button to our custom save function
+                            $(thisBtn).onclick = null;
+                            // .off disables any click event listeners
+                            $(thisBtn).removeAttr('onclick').prop('onclick', null).off('click');
+                            $(thisBtn).click(function() {
+                                    customSaveForm(thisBtn);
+                                    return false;
+                            });
+                    });
+            }
         });
     });
 }());
