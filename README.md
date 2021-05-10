@@ -16,6 +16,8 @@ This module introduces a range of additional options, such as having the first r
 
 -   This module will *not* automatically convert existing records to the project's newly defined record ID schema; it only applies to *new* records that are created, by a logged-in user, once the module is enabled.
 
+-   If the project is utilising randomisation then the "Randomize" button is hidden until the record is saved and the appropriate auto-numbered record id is generated.
+
 ## Project Configuration
 
 1. **Integer increment from a specified start value**: This option allows users to specify the first numerical record ID. Subsequent record IDs will increment from this project-wide (even for users in a DAG).

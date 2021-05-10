@@ -31,6 +31,7 @@ class RecordAutonumber extends AbstractExternalModule
 {
         const MODULE_VARNAME = 'MCRI_Record_Autonumber';
         const DAG_ELEMENT_NAME = '__GROUPID__';
+        const RAND_BUTTON_REPLACEMENT_TEXT = 'The project configuration for auto-numbering records requires that records be saved prior to randomization.';
         
         private $autonumberGenerator;
         
@@ -313,6 +314,7 @@ class RecordAutonumber extends AbstractExternalModule
          *  2. Prevent submit when essential data (e.g. DAG) is missing
          */
         protected function includeDataEntryPageContent() {
+                global $Proj;
                 $pkField = REDCap::getRecordIdField();
                 ?>
                 <style type="text/css">
@@ -330,6 +332,14 @@ class RecordAutonumber extends AbstractExternalModule
                     });
                 </script>
                 <?php
+                if($Proj->project['randomization']) {
+                    ?>
+                    <style type="text/css">
+                        #redcapRandomizeBtn { display: none !important; }
+                        #alreadyRandomizedText::after { content: "<?=\js_escape(self::RAND_BUTTON_REPLACEMENT_TEXT);?>" }
+                    </style>
+                    <?php
+                }
                 
                 $requiredFieldList = $this->autonumberGenerator->getRequiredDataEntryFields();
                 if (count($requiredFieldList) > 0 || $this->autonumberGenerator->requireDAG()) {
