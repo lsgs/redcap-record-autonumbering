@@ -124,22 +124,6 @@ class RecordAutonumber extends AbstractExternalModule
                                 $this->includeMessagePopup($this->getCrossPageMessage());
                                 $this->clearCrossPageMessage();
                         }
-                        if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
-
-                                if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
-                                        $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
-                                        $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
-                                } else {
-                                        $armFirstEventId = $this->Proj->firstEventId;
-                                        $armFirstForm = $this->Proj->firstForm;
-                                }
-                                $tempRecId = $_GET['id'];
-                                $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
-                                
-                                // use javascript to redirect to first form
-                                // can't use redirect($loc) due to EM framework exceptions
-                                echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>";
-                        }
                 }
         }
 
@@ -147,6 +131,7 @@ class RecordAutonumber extends AbstractExternalModule
          * redcap_every_page_before_render
          * Detect when new record is being saved and attempt to generate a new record id.
          * I.e. data entry form page has been sumbmitted and is reloading after the submit POST.
+         * Also, skip the record home page for new records and go to to first form for arm.
          * @param int project_id
          */
         public function redcap_every_page_before_render($project_id) {
@@ -181,9 +166,9 @@ class RecordAutonumber extends AbstractExternalModule
                                 $armFirstEventId = $this->Proj->firstEventId;
                                 $armFirstForm = $this->Proj->firstForm;
                         }
-                        $tempRecId = $_GET['id'];
+                        $tempRecId = \htmlspecialchars($_GET['id']);
                         $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
-                        redirect( $gotoUrl);
+                        redirect($gotoUrl);
                 }
         }
         
