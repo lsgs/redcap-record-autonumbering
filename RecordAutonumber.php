@@ -120,6 +120,20 @@ class RecordAutonumber extends AbstractExternalModule
                         } else if (strpos($this->page, 'ExternalModules/manager/project.php')>0) {
                                 $this->includeModuleManagerPageContent();
                         } 
+                        else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
+
+                            if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
+                                    $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
+                                    $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
+                            } else {
+                                    $armFirstEventId = $this->Proj->firstEventId;
+                                    $armFirstForm = $this->Proj->firstForm;
+                            }
+                            $tempRecId = \htmlspecialchars($_GET['id']);
+                            $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
+                            // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
+                            echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
+                        }
                         if ($this->crossPageMessageIsSet()) {
                                 $this->includeMessagePopup($this->getCrossPageMessage());
                                 $this->clearCrossPageMessage();
@@ -156,19 +170,6 @@ class RecordAutonumber extends AbstractExternalModule
                                 // continue and save record (with default, temp id if could not generate)...
                         }
 
-                }
-                else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
-
-                        if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
-                                $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
-                                $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
-                        } else {
-                                $armFirstEventId = $this->Proj->firstEventId;
-                                $armFirstForm = $this->Proj->firstForm;
-                        }
-                        $tempRecId = \htmlspecialchars($_GET['id']);
-                        $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
-                        redirect($gotoUrl);
                 }
         }
         
