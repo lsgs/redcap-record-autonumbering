@@ -59,16 +59,16 @@ class RecordAutonumber extends AbstractExternalModule
                         $settingsArray = $this->getProjectSettings($this->project_id);
 
                         // only create object when module is actually enabled for project!
-                        if (!$settingsArray['enabled']['value']) return;
+                        if (!($settingsArray['enabled'] || $settingsArray['enabled']['value'])) return;
 
                         try {
 
                                 $autonumberClassName = '';
                                 foreach ($settingsArray as $settingKey => $settingValues) {
                                         if ($settingKey==='autonumber-option') {
-                                                $autonumberClassName = $settingValues['value'];
+                                                $autonumberClassName = $settingValues;
                                         } else if (strpos($settingKey, 'option-setting-')===0) {
-                                                $autonumberSettings[$settingKey] = $settingValues['value'];
+                                                $autonumberSettings[$settingKey] = $settingValues;
                                         }
                                 }
 
@@ -133,6 +133,10 @@ class RecordAutonumber extends AbstractExternalModule
                             $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
                             // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
                             echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
+                        } else if ($this->page==='DataEntry/record_status_dashboard.php') {
+                                if ($this->user_rights['record_create'] && !isset($this->autonumberGenerator)) {
+                                        $this->disableAddNewRecord();
+                                }
                         }
                         if ($this->crossPageMessageIsSet()) {
                                 $this->includeMessagePopup($this->getCrossPageMessage());
@@ -185,14 +189,18 @@ class RecordAutonumber extends AbstractExternalModule
          */
         public function redcap_add_edit_records_page($project_id, $instrument, $event_id) {
                 if ($this->user_rights['record_create'] && !isset($this->autonumberGenerator)) {
-                        ?>
-                        <script type='text/javascript'>
-                            $(document).ready( function() { 
-                                $('button:contains("<?php echo $this->lang['data_entry_46'];?>")').prop('disabled', 'disabled').attr('title', 'Fix the module configuration first!');
-                            });
-                        </script>
-                        <?php
+                        $this->disableAddNewRecord();
                 }
+        }
+
+        protected function disableAddNewRecord() {
+                ?>
+                <script type='text/javascript'>
+                    $(document).ready( function() { 
+                        $('button:contains("<?php echo $this->lang['data_entry_46'];?>")').prop('disabled', 'disabled').attr('title', 'Custom Record Auto-numbering external module is not yet configured properly!');
+                    });
+                </script>
+                <?php
         }
         
         /**
@@ -224,6 +232,9 @@ class RecordAutonumber extends AbstractExternalModule
         }
         
         protected function getNextRecordId() {
+                if (is_null($this->autonumberGenerator)) {
+                    throw new AutonumberGenerateFailedException('Invalid record auto-numbering module configuration.');
+                }
                 do {
                         $nextId = $this->autonumberGenerator->getNextRecordId();
                         if ($this->autonumberGenerator->idMatchesExpectedPattern($nextId) &&

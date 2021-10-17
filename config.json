@@ -13,7 +13,13 @@
 
 	"description": "Allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.",
 
-	"permissions": [
+    "framework-version": 6,
+
+    "compatibility": {
+        "redcap-version-min": "10.4.1"
+    },
+
+    "permissions": [
 		"redcap_add_edit_records_page",
 		"redcap_data_entry_form_top",
 		"redcap_every_page_before_render",
@@ -86,7 +92,8 @@
 				{ "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
 				{ "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
 				{ "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
-				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." }
+				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
+				{ "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
             ],
             "branchingLogic": {
                 "field": "autonumber-option",
@@ -104,11 +111,13 @@
 				{ "value": "3", "name": "First three characters" },
 				{ "value": "4", "name": "First four characters" },
 				{ "value": "5", "name": "First five characters" },
+				{ "value": "6", "name": "First six characters" },
 				{ "value": "-1", "name": "Last character" },
 				{ "value": "-2", "name": "Last two characters" },
 				{ "value": "-3", "name": "Last three characters" },
 				{ "value": "-4", "name": "Last four characters" },
 				{ "value": "-5", "name": "Last five characters" },
+				{ "value": "-6", "name": "Last six characters" },
 				{ "value": "id", "name": "Use Group ID" },
 				{ "value": "un", "name": "Use DAG unique name" }
             ],
@@ -129,7 +138,7 @@
         },
 		{
 			"key": "option-setting-inc-part-len",
-			"name": "Specify the length of the incrementing part (will begin at 1 and be left-padded with zeros, overflows to additional digits)",
+			"name": "Specify the length of the incrementing part (will begin at 1 and be left-padded with zeros; overflows to additional digits)",
 			"required": true,
 			"type": "dropdown",
             "choices": [
@@ -137,7 +146,8 @@
 				{ "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
 				{ "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
 				{ "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
-				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." }
+				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
+				{ "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
             ],
             "branchingLogic": {
                 "field": "autonumber-option",
