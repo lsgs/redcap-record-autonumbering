@@ -129,7 +129,7 @@ class RecordAutonumber extends AbstractExternalModule
                                     $armFirstEventId = $this->Proj->firstEventId;
                                     $armFirstForm = $this->Proj->firstForm;
                             }
-                            $tempRecId = \htmlspecialchars($_GET['id']);
+                            $tempRecId = \htmlspecialchars($_GET['id'], ENT_QUOTES);
                             $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
                             // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
                             echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
