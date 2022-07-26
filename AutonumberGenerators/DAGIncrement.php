@@ -60,6 +60,13 @@ class DAGIncrement extends AbstractAutonumberGenerator {
 
                 // ensure dag is for project
                 $dagId = $_POST['__GROUPID__'];
+                if (empty($dagId)) {
+                        $sql = "select group_id from redcap_user_rights where project_id=? and username=?"; // group id not posted e.g. on schedulin page, try to detect from user
+                        $q = $this->module->query($sql, [PROJECT_ID,USERID]);
+                        $result = db_fetch_assoc($q);
+                        $dagId = $result["group_id"];
+                        if (empty($dagId)) throw new AutonumberMissingInputException('could not detect group_id');
+                }
                 $dagUniqueName = REDCap::getGroupNames(false, $dagId);
                 if ($dagUniqueName===false) {
                         throw new AutonumberMissingInputException('bad group_id '.$dagId);

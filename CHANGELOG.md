@@ -2,11 +2,17 @@
 All notable changes to the Record Autonumbering module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.5] - 2022-07-26
+- Update to framework version 8, min REDCap version 11.1.1
+- Remove use of built-in constants in constructor for PHP8 compatibility
+- Prevent lock/esig for unsaved records because record id does can not necessarily be determined
+- Handle record auto-numbering when creating a record via the Scheduling page
+- Attempt to utilise REDCap::reserveNewRecordId() but backed out - adds to cache but returns false
+- Fix Project Setup page default dialog text and auto-edit module settings on Setup button click
 
 ## [0.0.503] - 2021-04-20
 ### Added
 - Add Taryn Stoff's user guide to README (Kyle Chesney)
-
 
 ## [0.0.502] - 2021-03-22
 ### Added
@@ -16,16 +22,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Fix crash of module when using "padded integer increment with prefix" caused by abstract method getRequiredDataEntryFields needing declaration (Kyle Chesney)
 - Ensure module is enabled before initializing to prevent REDCap core's autonumbering enabling in *every* project (Kyle Chesney)
 
-
 ## [0.0.501] - 2020-12-09
 ### Added
 - Redirect with js (Luke)
 
-
 ## [0.0.301] - 2019-05-23
 ### Added
 - Update our repository with luke's 0.0.3 changes, namely, record_autonumber_v0.0.3 (Luke)
-
 
 ## [0.0.101] - 2019-04-19
 ### Summary

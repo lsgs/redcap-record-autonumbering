@@ -1,6 +1,6 @@
 <?php
 /**
- * REDCap External Module: Record Autonumber
+ * REDCap External Module: Custom Record Autonumbering
  * Specify record auto-numbering rules e.g. including part of DAG name, date format
  * Does not work for records created via survey response or randomisation.
  * @author Luke Stevens, Murdoch Children's Research Institute
@@ -32,6 +32,8 @@ class RecordAutonumber extends AbstractExternalModule
         const MODULE_VARNAME = 'MCRI_Record_Autonumber';
         const DAG_ELEMENT_NAME = '__GROUPID__';
         const RAND_BUTTON_REPLACEMENT_TEXT = 'The project configuration for auto-numbering records requires that records be saved prior to randomization.';
+        const PROJECT_SETUP_DIALOG_TEXT = 'REDCap\'s built-in record auto-numbering is being overridden by the "Custom Record Auto-numbering" External Module.';
+        const UNSAVED_RECORD_LOCK_TEXT = 'Record must be saved prior to locking when using the \"Custom Record Auto-numbering\" External Module.';
         
         private $autonumberGenerator;
         
@@ -44,11 +46,12 @@ class RecordAutonumber extends AbstractExternalModule
 
         public function __construct() {
                 parent::__construct();
+                if (!(defined('PAGE') && defined('PROJECT_ID') && defined('USERID'))) return;
                 global $Proj, $lang, $user_rights;
-                $this->page = PAGE;
-                $this->project_id = intval(PROJECT_ID);
-                $this->super_user = SUPER_USER;
-                $this->user = strtolower(USERID);
+                $this->page = defined('PAGE') ? PAGE : '';
+                $this->project_id = $this->getProjectId();
+                $this->super_user = defined('SUPER_USER') ? SUPER_USER : false;
+                $this->user = defined('USERID') ? strtolower(USERID) : '';
                 $this->Proj = $Proj;
                 $this->lang = &$lang;
                 $this->user_rights = &$user_rights;
@@ -80,7 +83,8 @@ class RecordAutonumber extends AbstractExternalModule
                                 if ($autonumberClassName!=='') { // ... and is configured
                                         $this->autonumberGenerator = AutonumberGeneratorFactory::make(
                                                 $autonumberClassName,
-                                                $autonumberSettings
+                                                $autonumberSettings,
+                                                $this // give the autonumber generator a reference to the module so can utilise module methods e.g. query()
                                         );
                                 }
                         } catch (AutonumberConfigException $e) {
@@ -91,11 +95,13 @@ class RecordAutonumber extends AbstractExternalModule
 
         function redcap_module_project_enable($version, $project_id) {
                 // Turn record autonumbering on if it is not already on
+                global $Proj;
                 if (!$Proj->project['auto_inc_set']) {
-                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=".db_escape($project_id);
-                        $q = db_query($sql);
-                        $nrows = db_affected_rows();
-                        if ($nrows==1) {
+                        $sql = "update redcap_projects set auto_inc_set=1 where auto_inc_set=0 and project_id=? limit 1";
+                        $query = $this->createQuery();
+                        $query->add($sql, [$project_id]);
+                        $query->execute();
+                        if ($query->affected_rows==1) {
                                 \Logging::logEvent($sql,"redcap_projects","MANAGE",$project_id,"project_id = $project_id","Modify project settings");
                         }
                 }
@@ -104,23 +110,22 @@ class RecordAutonumber extends AbstractExternalModule
         /**
          * redcap_every_page_top
          * Perform three functions:
-         * 1. ProjectSetup page: alter  "auto-numbering" button to indicate
-         *    usage of this module.
-         * 2. ExternalModules/manager/project auto-open config when selected 
-         *    "Configure" from ProjectSetup page button
-         * 3. Detect auto-number generation error and display dialog box to 
-         *    inform user
+         * 1. ProjectSetup page: alter  "auto-numbering" button to indicate usage of this module.
+         * 2. ExternalModules/manager/project auto-open config when selected "Configure" from ProjectSetup page button
+         * 3. Detect auto-number generation error and display dialog box to inform user
+         * 4. If scheduling page, add JS to populate new record id in text box
          * @param int project_id
          */
         public function redcap_every_page_top($project_id) {
             
-                if (defined('USERID') && isset($this->project_id) && $this->project_id > 0) {
+                if (isset($this->user) && isset($this->project_id) && $this->project_id > 0) {
                         if (strpos($this->page, 'ProjectSetup/index.php')!==false) {
                                 $this->includeProjectSetupPageContent();
-                        } else if (strpos($this->page, 'ExternalModules/manager/project.php')>0) {
+                        } else if (strpos('ExternalModules/manager/project.php', $this->page)!==false) {
                                 $this->includeModuleManagerPageContent();
-                        } 
-                        else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
+                        } else if (strpos('Calendar/scheduling.php', $this->page)!==false) {
+                                $this->includeSchedulingPageContent();
+                        } else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
 
                             if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
                                     $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
@@ -153,13 +158,26 @@ class RecordAutonumber extends AbstractExternalModule
          * @param int project_id
          */
         public function redcap_every_page_before_render($project_id) {
-                // is this is a new data entry record (not survey) that is not yet saved?
+                // is this is a new data entry record (not survey) that is not yet saved
+                //, or new record via Generate Schedule?
+                $newType = false;
+                $pkField = REDCap::getRecordIdField();
                 if ($this->page==='DataEntry/index.php' && isset($_POST['submit-action']) && $_POST['submit-action']!=='submit-btn-cancel') {
-                        $pkField = REDCap::getRecordIdField();
-                        $postRec = $_POST[$pkField];
+                    $newType = 'DE';
+                    $postRec = $_POST[$pkField];
+                } else if ($this->page==='Calendar/scheduling_ajax.php' && isset($_GET['action']) && $_GET['action']==='adddates' && isset($_GET['newid']) && $_GET['newid']=='1') {
+                    $newType = 'GS';
+                    $postRec = $_GET['idnumber'];
+                }
+                
+                if ($newType!==false) {
                         if (isset($postRec) && !$this->recordExists($postRec)) {
                                 try {
-                                        $_POST[$pkField] = $this->getNextRecordId();
+                                        $newRecordId = $this->getNextRecordId();
+                                        if ($newType==='DE') $_POST[$pkField] = $newRecordId;
+                                        if ($newType==='GS') $_GET['idnumber'] = $newRecordId;
+                                        global $auto_inc_set;
+                                        $auto_inc_set = 0;
                                 } catch (AutonumberGenerateFailedException $e) {
                                         $msg = 'Could not generate record number in the expected format: '.$e->getMessage();
                                         $this->handleAutonumberException($postRec, $msg);
@@ -173,7 +191,6 @@ class RecordAutonumber extends AbstractExternalModule
                                 unset($_GET['auto']);
                                 // continue and save record (with default, temp id if could not generate)...
                         }
-
                 }
         }
         
@@ -236,7 +253,7 @@ class RecordAutonumber extends AbstractExternalModule
                     throw new AutonumberGenerateFailedException('Invalid record auto-numbering module configuration.');
                 }
                 do {
-                        $nextId = $this->autonumberGenerator->getNextRecordId();
+                        $nextId = $this->autonumberGenerator->getNextRecordId(); // $nextId = REDCap::reserveNewRecordId($this->project_id, $this->autonumberGenerator->getNextRecordId()); // v1.1.0: using like this does not work 
                         if ($this->autonumberGenerator->idMatchesExpectedPattern($nextId) &&
                             !$this->recordExists($nextId)) {
                                 return $nextId;
@@ -260,7 +277,8 @@ class RecordAutonumber extends AbstractExternalModule
         protected function includeProjectSetupPageContent() {
                 // Change the "Record autonumbering" enable/disble button to point to the module config page
                 $moduleConfigUrl = APP_PATH_WEBROOT.'ExternalModules/manager/project.php?pid='.$this->project_id.'&autonumber_config=1';
-                $disabled = (SUPER_USER || $this->user_rights['design']==='1') ? '' : 'disabled=""';
+                $disabled = ($this->super_user || $this->user_rights['design']==='1') ? '' : 'disabled=""';
+                $dialogText = REDCap::escapeHtml($this->getSystemSetting('project-setup-dialog-text') ?? self::PROJECT_SETUP_DIALOG_TEXT);
                 ?>
                 <div id="emAutoNumConfigDiv" style="text-indent:-75px;margin-left:75px;margin-bottom:2px;color:green;display:none;">
                     <button class="btn btn-defaultrc btn-xs fs11" style="min-width:49px;" id="emAutoNumConfigBtn" <?=$disabled?>><?=$this->lang['rights_142']?></button>
@@ -276,7 +294,7 @@ class RecordAutonumber extends AbstractExternalModule
                         });
                         $('#emAutoNumQuestionDialog').click(function() {
                             simpleDialog(
-                                '<div title="<?php echo REDCap::escapeHtml($this->getModuleName());?>"><?php echo REDCap::escapeHtml($this->getProjectSetting('project-setup-dialog-text'));?></div>',
+                                '<div title="<?php echo REDCap::escapeHtml($this->getModuleName());?>"><?=$dialogText?></div>',
                                 '<i class="fas fa-cube mr-1"></i><?php echo REDCap::escapeHtml($this->getModuleName());?>'
                             );
                         });
@@ -296,9 +314,12 @@ class RecordAutonumber extends AbstractExternalModule
                 if (isset($_GET['autonumber_config'])) {
                         ?>
                         <script type="text/javascript">
+                            /*Custom Record Autonumbering auto-config*/
                             $(window).on('load', function() {
                                 history.pushState({}, null, location.href.split("&autonumber_config")[0]);
-                                $('tr[data-module="record_autonumber"] button.external-modules-configure-button').trigger('click');
+                                setTimeout(function() {
+                                    $('tr[data-module="record_autonumber"] button.external-modules-configure-button').trigger('click');
+                                }, 1000);
                             });
                         </script>
                         <?php
@@ -306,17 +327,40 @@ class RecordAutonumber extends AbstractExternalModule
         }
 
         /**
+         * Scheduling page content
+         * Get next record id and replace value in 'new record id' text box
+         */
+        protected function includeSchedulingPageContent() {
+            try {
+                $nextId = $this->getNextRecordId();
+            } catch (RecordAutonumberException $e) {
+                return;
+            }
+            ?>
+            <script type="text/javascript">
+                /*Custom Record Autonumbering*/
+                $(document).ready(function() {
+                    $('#idnumber2').val('<?=$nextId?>');
+                });
+            </script>
+            <?php
+        }
+
+        /**
          * Tweaks to data entry form
          *  1. Hide display of temporary record id
          *  2. Prevent submit when essential data (e.g. DAG) is missing
+         *  3. Hide lock/esig buttons and show message
          */
         protected function includeDataEntryPageContent() {
                 global $Proj;
                 $pkField = REDCap::getRecordIdField();
+                $unsavedRecLockText = REDCap::escapeHtml($this->getSystemSetting('unsaved-record-lock-text') ?? self::UNSAVED_RECORD_LOCK_TEXT);
                 ?>
                 <style type="text/css">
                     /* Hide the "Save changes and leave" button in the unsaved changes dialog */
                     .dataEntrySaveLeavePageBtn { display:none; }
+                    #__LOCKRECORD__-tr input { display:none; }
                 </style>
                 <script type="text/javascript">
                     $(document).ready(function() {
@@ -325,7 +369,7 @@ class RecordAutonumber extends AbstractExternalModule
                         $('#<?php echo $pkField;?>-tr').hide();
                         $('div.menuboxsub').hide();
                         $('div.formMenuList').hide();
-                        
+                        $('#__LOCKRECORD__-tr td:nth-child(2)').html('<div class="yellow"><?=$unsavedRecLockText?></div>');
                     });
                 </script>
                 <?php

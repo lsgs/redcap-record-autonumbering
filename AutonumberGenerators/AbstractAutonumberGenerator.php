@@ -16,13 +16,15 @@ abstract class AbstractAutonumberGenerator {
         protected static $RequireDAG = false;
         protected static $RequiredFields = array();
         protected $config;
+        protected $module;
         private $retryDelay = 1;
         private $totalRetryTime = 0;
 
-        public function __construct($config) {
+        public function __construct($config, $module) {
                 try {
-                        $this->config = $config;
-                        $this->validateConfiguration();
+                    $this->config = $config;
+                    $this->module = $module;
+                    $this->validateConfiguration();
                 } catch (RecordAutonumberException $ex) {
                         throw new AutonumberConfigException('Module configuration error for AutonumberGenerator option '.static::getClassNameWithoutNamespace().': "'.$ex->getMessage().'"', 0, $ex);
                 }

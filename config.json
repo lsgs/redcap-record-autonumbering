@@ -1,8 +1,6 @@
 {
 	"name": "Custom Record Auto-numbering",
-
 	"namespace": "MCRI\\RecordAutonumber",
-
 	"authors": [
 		{
 			"name": "Luke Stevens",
@@ -10,15 +8,11 @@
 			"institution": "Murdoch Children's Research Institute"
 		}
 	],
-
 	"description": "Allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.",
-
-    "framework-version": 6,
-
+    "framework-version": 8,
     "compatibility": {
-        "redcap-version-min": "10.4.1"
+        "redcap-version-min": "11.1.1"
     },
-
     "permissions": [
 		"redcap_add_edit_records_page",
 		"redcap_data_entry_form_top",
@@ -27,21 +21,21 @@
 		"redcap_save_record",
 		"redcap_module_project_enable"
 	],
-
 	"enable-every-page-hooks-on-system-pages": false,
-
-	"links": {
-	},
-
 	"system-settings": [
 		{
 			"key": "project-setup-dialog-text",
-			"name": "Project Setup page dialog box text",
-			"required": true,
+			"name": "Project Setup page dialog box text<p class=\"text-muted\">Default:<br>\"REDCap's built-in record auto-numbering is being overridden by the \"Custom Record Auto-numbering\" External Module.\"</p>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "unsaved-record-lock-text",
+			"name": "Text for Lock option of data entry form for unsaved record<p class=\"text-muted\">Default:<br>\"Record must be saved prior to locking when using the \"Custom Record Auto-numbering\" External Module.\"</p>",
+			"required": false,
 			"type": "text"
 		}
 	],
-
 	"project-settings": [
         {
             "key": "descriptive-text-1",

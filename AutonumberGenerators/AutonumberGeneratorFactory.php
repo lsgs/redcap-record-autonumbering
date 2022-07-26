@@ -14,14 +14,14 @@ use REDCap;
  * @author luke.stevens
  */
 class AutonumberGeneratorFactory {
-        public static function make($className, $config) {
+        public static function make($className, $config, $module) {
 
                 $dir = dirname(__FILE__);
                 $classFile = $dir.'/'.$className.'.php';
                 if (file_exists($classFile)) {
                         require_once $className.'.php';
                         $classWithNS = __NAMESPACE__.'\\'.$className;//'MCRI\\RecordAutonumber\\'.$className;
-                        $ang = new $classWithNS($config);
+                        $ang = new $classWithNS($config, $module);
                 } else {
                         $msg = "ERROR in ".__CLASS__.": Class '$className' not found";
                         REDCap::logEvent($msg);
