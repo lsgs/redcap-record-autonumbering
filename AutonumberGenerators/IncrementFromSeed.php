@@ -34,7 +34,7 @@ class IncrementFromSeed extends AbstractAutonumberGenerator {
                 
                 $allRecords = REDCap::getData('array',null,REDCap::getRecordIdField());
 
-                if (count(allRecords) === 0) { return $seed; }
+                if (count($allRecords) === 0) { return $seed; }
 
                 // find the current max integer id
                 $currentMax = 0;
