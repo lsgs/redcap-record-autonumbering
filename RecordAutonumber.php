@@ -37,6 +37,7 @@ class RecordAutonumber extends AbstractExternalModule
         
         private $autonumberGenerator;
         
+        private $Proj;
         private $lang;
         private $page;
         private $project_id;
@@ -44,9 +45,8 @@ class RecordAutonumber extends AbstractExternalModule
         private $user;
         private $user_rights;
 
-        public function __construct() {
-                parent::__construct();
-                if (!(defined('PAGE') && defined('PROJECT_ID') && defined('USERID'))) return;
+        public function initialise() {
+                if (!(defined('PAGE') && defined('PROJECT_ID') && defined('USERID'))) return false;
                 global $Proj, $lang, $user_rights;
                 $this->page = defined('PAGE') ? PAGE : '';
                 $this->project_id = $this->getProjectId();
@@ -91,6 +91,7 @@ class RecordAutonumber extends AbstractExternalModule
                                 $this->setCrossPageMessage($e->getMessage());
                         }
                 }
+                return true;
         }
 
         function redcap_module_project_enable($version, $project_id) {
@@ -117,7 +118,7 @@ class RecordAutonumber extends AbstractExternalModule
          * @param int project_id
          */
         public function redcap_every_page_top($project_id) {
-            
+                if (!$this->initialise()) return;
                 if (isset($this->user) && isset($this->project_id) && $this->project_id > 0) {
                         if (strpos($this->page, 'ProjectSetup/index.php')!==false) {
                                 $this->includeProjectSetupPageContent();
@@ -134,7 +135,7 @@ class RecordAutonumber extends AbstractExternalModule
                                     $armFirstEventId = $this->Proj->firstEventId;
                                     $armFirstForm = $this->Proj->firstForm;
                             }
-                            $tempRecId = \htmlspecialchars($_GET['id'], ENT_QUOTES);
+                            $tempRecId = $this->escape($_GET['id']);
                             $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
                             // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
                             echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
@@ -158,6 +159,7 @@ class RecordAutonumber extends AbstractExternalModule
          * @param int project_id
          */
         public function redcap_every_page_before_render($project_id) {
+                if (!$this->initialise()) return;
                 // is this is a new data entry record (not survey) that is not yet saved
                 //, or new record via Generate Schedule?
                 $newType = false;
@@ -205,6 +207,7 @@ class RecordAutonumber extends AbstractExternalModule
          * Disable "Add new record" if error in module configuration
          */
         public function redcap_add_edit_records_page($project_id, $instrument, $event_id) {
+                if (!$this->initialise()) return;
                 if ($this->user_rights['record_create'] && !isset($this->autonumberGenerator)) {
                         $this->disableAddNewRecord();
                 }
@@ -227,6 +230,7 @@ class RecordAutonumber extends AbstractExternalModule
          *  2. Prevent submit when essential data (e.g. DAG) is missing
          */
         public function redcap_data_entry_form_top($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) {
+                if (!$this->initialise()) return;
                 if (is_null($this->autonumberGenerator) || !is_subclass_of($this->autonumberGenerator, 'MCRI\RecordAutonumber\AbstractAutonumberGenerator')) { return; }
                 if ($this->user_rights['record_create'] &&
                     !$this->recordExists($record)) {
@@ -240,8 +244,8 @@ class RecordAutonumber extends AbstractExternalModule
          * Can't get it to return new rec id in randomisation confirmation dialog and update page (so saves with default autonumber)
          * NOT YET IMPLEMENTED
          */
-        public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
-        }
+        //public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
+        //}
         
         protected function recordExists($recId) {
                 if (is_null($recId)) { return false; }
@@ -444,6 +448,8 @@ class RecordAutonumber extends AbstractExternalModule
                     attachedListeners = true;
                     var saveBtns = $('#__SUBMITBUTTONS__-div [id^=submit-btn-save], #formSaveTip [id^=submit-btn-save]');
                     $.each(saveBtns, function ( btnIndex, thisBtn ) {
+                            // set the name equal to the id so the requested save type actually occurs
+                            $(thisBtn).attr('name', $(thisBtn).attr('id'));
                             // Alter the onclick event of the button to our custom save function
                             $(thisBtn).onclick = null;
                             // .off disables any click event listeners
