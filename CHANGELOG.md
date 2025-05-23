@@ -2,6 +2,15 @@
 All notable changes to the Record Autonumbering module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.7] - 2025-05-23
+- Fix bug with save buttons nextform/exitrecord that were instead returning to record home
+- Replace constructor with initialisation function called from each hook function
+- Remove custom class from "Clarity" project from public repo
+- Update to framework version 16
+
+## [1.0.6] - 2023-01-13
+-Bug fix in autoincrement from seed autonumber generator
+
 ## [1.0.5] - 2022-07-26
 - Update to framework version 8, min REDCap version 11.1.1
 - Remove use of built-in constants in constructor for PHP8 compatibility

@@ -1,5 +1,9 @@
 # Custom Record Auto-Numbering
 
+Luke Stevens, Murdoch Children's Research Institute https://www.mcri.edu.au
+
+[https://github.com/lsgs/redcap-record-autonumbering/](https://github.com/lsgs/redcap-record-autonumbering/)
+
 This module allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.
 
 ## Motivation
