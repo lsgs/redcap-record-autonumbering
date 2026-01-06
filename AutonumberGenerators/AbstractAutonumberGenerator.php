@@ -25,8 +25,9 @@ abstract class AbstractAutonumberGenerator {
                     $this->config = $config;
                     $this->module = $module;
                     $this->validateConfiguration();
-                } catch (RecordAutonumberException $ex) {
-                        throw new AutonumberConfigException('Module configuration error for AutonumberGenerator option '.static::getClassNameWithoutNamespace().': "'.$ex->getMessage().'"', 0, $ex);
+                } catch (\Throwable $ex) {
+                        $msg = ($ex instanceof AutonumberConfigException) ? ': '.$ex->getMessage() : '';
+                        throw new AutonumberConfigException('Module configuration error for AutonumberGenerator option '.static::getClassNameWithoutNamespace().$msg, 0, $ex);
                 }
         }
         
@@ -37,6 +38,34 @@ abstract class AbstractAutonumberGenerator {
          */
         abstract protected function validateConfiguration();
         
+        /**
+         * Check that a candidate record number is compatible with any field validation type currently applied to the project pk field.
+         * Throw an exception if incompatible.
+         */
+        protected function validateAutoNumberVsPkFieldValidation($testId): void {
+            $proj = $this->module->getProj();
+            $pkField = $proj->table_pk;
+            $pkFieldType = $proj->metadata[$pkField]['element_type'];
+            $pkFieldValType = $proj->metadata[$pkField]['element_validation_type'];
+
+            if ($pkFieldType!=='text') {
+                throw new AutonumberConfigException('Project record id field is not a text field');
+            }
+
+            if (empty($pkFieldValType)) return;
+
+            $valTypes = \getValTypes();
+
+            if ($pkFieldValType == 'int') $pkFieldValType = 'integer';
+            elseif ($pkFieldValType == 'float') $pkFieldValType = 'number';
+            if (!isset($valTypes[$pkFieldValType])) return;
+
+            $pattern = $valTypes[$pkFieldValType]['regex_php'];
+            if (!preg_match($pattern, $testId)) {
+                throw new AutonumberConfigException("Module settings are incompatible with record id field validation type ($pkFieldValType)");
+            }
+        }
+
         /**
          * Generate the next record id according to the desired logic/pattern
          * @return string The next record id 

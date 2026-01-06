@@ -2,6 +2,12 @@
 All notable changes to the Record Autonumbering module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.8] - 2026-01-06
+- Improved config validation including check of custom record format against record id field validation type
+- Display config validation errors in red highlight on project Module page
+- Wording changes in readme and config description
+- Double check for existence of first record in DAG in case of problem with `starts_with()`
+
 ## [1.0.7] - 2025-05-23
 - Fix bug with save buttons nextform/exitrecord that were instead returning to record home
 - Replace constructor with initialisation function called from each hook function

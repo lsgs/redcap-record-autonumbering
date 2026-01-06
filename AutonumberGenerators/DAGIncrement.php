@@ -48,6 +48,12 @@ class DAGIncrement extends AbstractAutonumberGenerator {
                 } else {
                         $this->config[$inc] = intval($this->config[$inc]);
                 }
+
+                $dags = REDCap::getGroupNames(true);
+                
+                if (empty($dags)) throw new AutonumberConfigException('Project does not yet have any DAGs set up');
+
+                $this->validateAutoNumberVsPkFieldValidation($this->getNextRecordId(array('__GROUPID__' => key($dags))));
         }
         
         public function getNextRecordId($params=null) {
@@ -59,9 +65,15 @@ class DAGIncrement extends AbstractAutonumberGenerator {
                 $pkField = REDCap::getRecordIdField();
 
                 // ensure dag is for project
-                $dagId = $_POST['__GROUPID__'];
+                if (isset($params['__GROUPID__'])) {
+                    $dagId = $this->module->escape($params['__GROUPID__']);
+                } else if (isset($_POST['__GROUPID__'])) {
+                    $dagId = $this->module->escape($_POST['__GROUPID__']);
+                } else {
+                    $dagId = null;
+                }
                 if (empty($dagId)) {
-                        $sql = "select group_id from redcap_user_rights where project_id=? and username=?"; // group id not posted e.g. on schedulin page, try to detect from user
+                        $sql = "select group_id from redcap_user_rights where project_id=? and username=?"; // group id not posted e.g. on scheduling page, try to detect from user
                         $q = $this->module->query($sql, [PROJECT_ID,USERID]);
                         $result = db_fetch_assoc($q);
                         $dagId = $result["group_id"];
@@ -104,13 +116,13 @@ class DAGIncrement extends AbstractAutonumberGenerator {
                 );
 
                 if (count($dagRecords) === 0) {
-                        return $idDagPart.$configSeparator.sprintf('%0'.$configIncPartLen.'d', 1);
+                        $lastRecordPart = 0;
+                } else {
+                        // sort array of record ids and find max recordPart to increment
+                        ksort($dagRecords);
+                        end($dagRecords);
+                        $lastRecordPart = intval(str_replace($idDagPart.$configSeparator, '', key($dagRecords)));
                 }
-
-                // sort array of record ids and find max recordPart to increment
-                ksort($dagRecords);
-                end($dagRecords);
-                $lastRecordPart = intval(str_replace($idDagPart.$configSeparator, '', key($dagRecords)));
 
                 do {
                         $newRecordId = $idDagPart.$configSeparator.sprintf('%0'.$configIncPartLen.'d', ++$lastRecordPart);

@@ -4,13 +4,13 @@ Luke Stevens, Murdoch Children's Research Institute https://www.mcri.edu.au
 
 [https://github.com/lsgs/redcap-record-autonumbering/](https://github.com/lsgs/redcap-record-autonumbering/)
 
-This module allows users to create a custom record auto-numbering schema for their REDCap project. This works during data entry but not in public surveys or API/CSV data import.
+This module provides various alternative record auto-numbering schemas for REDCap project records, e.g. date/time-stamp, or padding/incrementing within a site/DAG utilising part of the DAG name rather than the built-in DAG ID. Note: custom auto-numbering works only during data entry; not for public surveys or with API/CSV data imports.
 
 ## Motivation
 
 Normal REDCap behavior dictates that having auto-numbering enabled in a project makes the first record created have a record ID of 1, the second record created have an ID of 2, the third record created have a record ID of 3, and so on. If the project is using DAGs (Data Entry Groups), having auto-numbering enabled will automatically have its record name prepended with the Group ID (DAG ID) number and a dash/hyphen. For example, the first three records IDs created for DAG ID 98 will get automatically named 98-1, 98-2, and 98-3.
 
-This module introduces a range of additional options, such as having the first record ID created start at 1000 or 001 instead of 1, append all record IDs with a prefix (ABC-1, ABC-2, ABC-3, etc.), or having the DAG name appear in the record ID (UF-1, UF-2, UF-3) instead of the DAG ID (98-1, 98-2, 98-3, etc.) when utilizing DAGs in a project.
+This module introduces a range of additional options, such as having the first record ID created start at 1000 or 001 instead of 1, prepend all record IDs with a prefix (ABC-1, ABC-2, ABC-3, etc.), or having the DAG name appear in the record ID (UF-1, UF-2, UF-3) instead of the DAG ID (98-1, 98-2, 98-3, etc.) when utilizing DAGs in a project.
 
 ## Limitations
 

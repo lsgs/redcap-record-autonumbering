@@ -27,6 +27,7 @@ class IncrementFromSeed extends AbstractAutonumberGenerator {
                 if (!ctype_digit($this->config['option-setting-increment-from-seed'])) {
                         throw new AutonumberConfigException('Integer seed value required');
                 }
+                $this->validateAutoNumberVsPkFieldValidation($this->getNextRecordId());
         }
         
         public function getNextRecordId($params=null) {

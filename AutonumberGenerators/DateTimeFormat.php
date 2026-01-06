@@ -24,10 +24,14 @@ class DateTimeFormat extends AbstractAutonumberGenerator {
                 } 
                 
                 $now = new DateTime();
+                $candidateId = $now->format($this->config['option-setting-date-time-format']);
 
-                if (false===$now->format($this->config['option-setting-date-time-format'])) {
+                try {
+                    $convertedCandidateId = new DateTime($candidateId);
+                } catch (\Throwable $th) {
                         throw new AutonumberConfigException('Invalid date/time format string "'.$this->config['option-setting-date-time-format'].'"');
                 }
+                $this->validateAutoNumberVsPkFieldValidation($candidateId);
         }
         
         public function getNextRecordId($params=null) {

@@ -45,6 +45,10 @@ class RecordAutonumber extends AbstractExternalModule
         private $user;
         private $user_rights;
 
+        public function getProj() {
+            return $this->Proj;
+        }
+
         public function initialise() {
                 if (!(defined('PAGE') && defined('PROJECT_ID') && defined('USERID'))) return false;
                 global $Proj, $lang, $user_rights;
@@ -60,6 +64,7 @@ class RecordAutonumber extends AbstractExternalModule
                 if ($this->project_id > 0) {
                         // read all the config options
                         $settingsArray = $this->getProjectSettings($this->project_id);
+                        $autonumberSettings = array();
 
                         // only create object when module is actually enabled for project!
                         if (!($settingsArray['enabled'] || $settingsArray['enabled']['value'])) return;
@@ -159,20 +164,20 @@ class RecordAutonumber extends AbstractExternalModule
          * @param int project_id
          */
         public function redcap_every_page_before_render($project_id) {
-                if (!$this->initialise()) return;
-                // is this is a new data entry record (not survey) that is not yet saved
-                //, or new record via Generate Schedule?
+            if (!defined('PAGE')) return;
+                // is this is a new data entry record (not survey) that is not yet saved or new record via Generate Schedule?
                 $newType = false;
                 $pkField = REDCap::getRecordIdField();
-                if ($this->page==='DataEntry/index.php' && isset($_POST['submit-action']) && $_POST['submit-action']!=='submit-btn-cancel') {
+                if (PAGE==='DataEntry/index.php' && isset($_POST['submit-action']) && $_POST['submit-action']!=='submit-btn-cancel') {
                     $newType = 'DE';
                     $postRec = $_POST[$pkField];
-                } else if ($this->page==='Calendar/scheduling_ajax.php' && isset($_GET['action']) && $_GET['action']==='adddates' && isset($_GET['newid']) && $_GET['newid']=='1') {
+                } else if (PAGE==='Calendar/scheduling_ajax.php' && isset($_GET['action']) && $_GET['action']==='adddates' && isset($_GET['newid']) && $_GET['newid']=='1') {
                     $newType = 'GS';
                     $postRec = $_GET['idnumber'];
                 }
                 
                 if ($newType!==false) {
+                        if (!$this->initialise()) return;   
                         if (isset($postRec) && !$this->recordExists($postRec)) {
                                 try {
                                         $newRecordId = $this->getNextRecordId();
@@ -269,11 +274,18 @@ class RecordAutonumber extends AbstractExternalModule
         }
         
         protected function includeMessagePopup($message) {
+                $msgId = $this->escape(self::MODULE_VARNAME.'_Error_Display');
                 $content = REDCap::escapeHtml($message);
                 $title = 'External Module: '.REDCap::escapeHtml($this->getModuleName());
+                if (strpos('ExternalModules/manager/project.php', $this->page)!==false) {
+                    echo "<div id='$msgId' class='red' style='display:none;'>$content</div>";
+                }
                 ?>
                 <script type="text/javascript">
-                    simpleDialog('<?php echo $content;?>', '<?php echo $title;?>');
+                    $(document).ready(function(){
+                        $('#<?=$msgId?>').appendTo('tr[data-module=record_autonumber] div.external-modules-description').show();
+                        simpleDialog('<?php echo $content;?>', '<?php echo $title;?>');
+                    });
                 </script>
                 <?php
         }

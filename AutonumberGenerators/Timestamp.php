@@ -15,6 +15,7 @@ class Timestamp extends AbstractAutonumberGenerator {
         
         protected function validateConfiguration() {
                 // no settings required for Timestamp
+                $this->validateAutoNumberVsPkFieldValidation($this->getNextRecordId());
         }
         
         public function getNextRecordId($params=null) {

@@ -42,14 +42,14 @@ class PrefixAndPad extends AbstractAutonumberGenerator {
                 } else {
                         $this->padlen = intval($this->config[$padlenOpt]);
                 }
+                $this->validateAutoNumberVsPkFieldValidation($this->getNextRecordId());
         }
         
         public function getNextRecordId($params=null) {
 
                 $pkField = REDCap::getRecordIdField();
 
-                // read records that begin with dag component
-                // - not by dag in case records have been moved or renamed
+                // read records that begin with prefix component
                 $prefixedRecords = REDCap::getData(
                         'array',    // * PARAM: return_format 
                         null,       // * PARAM: records
