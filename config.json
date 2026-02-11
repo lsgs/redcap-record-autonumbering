@@ -42,6 +42,7 @@
 				{ "value": "DAGIncrement", "name": "Increment within DAG using part of DAG name" },
 				{ "value": "DateTimeFormat", "name": "Date/time in selected format" },
 				{ "value": "Timestamp", "name": "Unix timestamp (16 digits)" },
+				{ "value": "RandomAlphanumeric", "name": "Random 6-character alphanumeric ID" },
 				{ "value": "Custom", "name": "A project-specific custom auto-numbering schema" }
 			]
 		},
