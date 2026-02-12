@@ -1,181 +1,192 @@
 {
-	"name": "Custom Record Auto-Numbering",
-	"namespace": "MCRI\\RecordAutonumber",
-	"authors": [
-		{
-			"name": "Luke Stevens",
-			"email": "luke.stevens@mcri.edu.au",
-			"institution": "Murdoch Children's Research Institute"
-		}
-	],
-	"description": "Provides various alternative record auto-numbering schemas for REDCap project records, e.g. date/time-stamp, or padding/incrementing within a site/DAG utilising part of the DAG name rather than the built-in DAG ID. Note: custom auto-numbering works only during data entry; not for public surveys or with API/CSV data imports. <span class=\"d-none\">autonumbering</span>",
+    "name": "Custom Record Auto-Numbering",
+    "namespace": "MCRI\\RecordAutonumber",
+    "authors": [
+        {
+            "name": "Luke Stevens",
+            "email": "luke.stevens@mcri.edu.au",
+            "institution": "Murdoch Children's Research Institute"
+        }
+    ],
+    "description": "Provides various alternative record auto-numbering schemas for REDCap project records, e.g. date/time-stamp, or padding/incrementing within a site/DAG utilising part of the DAG name rather than the built-in DAG ID. Note: custom auto-numbering works only during data entry; not for public surveys or with API/CSV data imports. <span class=\"d-none\">autonumbering</span>",
     "framework-version": 16,
-	"enable-every-page-hooks-on-system-pages": false,
-	"system-settings": [
-		{
-			"key": "project-setup-dialog-text",
-			"name": "Project Setup page dialog box text<p class=\"text-muted\">Default:<br>\"REDCap's built-in record auto-numbering is being overridden by the \"Custom Record Auto-numbering\" External Module.\"</p>",
-			"required": false,
-			"type": "text"
-		},
-		{
-			"key": "unsaved-record-lock-text",
-			"name": "Text for Lock option of data entry form for unsaved record<p class=\"text-muted\">Default:<br>\"Record must be saved prior to locking when using the \"Custom Record Auto-numbering\" External Module.\"</p>",
-			"required": false,
-			"type": "text"
-		}
-	],
-	"project-settings": [
+    "enable-every-page-hooks-on-system-pages": false,
+    "system-settings": [
+        {
+            "key": "project-setup-dialog-text",
+            "name": "Project Setup page dialog box text<p class=\"text-muted\">Default:<br>\"REDCap's built-in record auto-numbering is being overridden by the \"Custom Record Auto-numbering\" External Module.\"</p>",
+            "required": false,
+            "type": "text"
+        },
+        {
+            "key": "unsaved-record-lock-text",
+            "name": "Text for Lock option of data entry form for unsaved record<p class=\"text-muted\">Default:<br>\"Record must be saved prior to locking when using the \"Custom Record Auto-numbering\" External Module.\"</p>",
+            "required": false,
+            "type": "text"
+        }
+    ],
+    "project-settings": [
         {
             "key": "descriptive-text-1",
             "name": "Options for record autonumbering in this project.",
             "type": "descriptive"
         },
-		{
-			"key": "autonumber-option",
-			"name": "Record auto-numbering option",
-			"required": true,
-			"type": "dropdown",
+        {
+            "key": "autonumber-option",
+            "name": "Record auto-numbering option",
+            "required": true,
+            "type": "dropdown",
             "choices": [
-				{ "value": "IncrementFromSeed", "name": "Integer increment from specifed start value" },
-				{ "value": "PrefixAndPad", "name": "Padded integer increment with prefix" },
-				{ "value": "DAGIncrement", "name": "Increment within DAG using part of DAG name" },
-				{ "value": "DateTimeFormat", "name": "Date/time in selected format" },
-				{ "value": "Timestamp", "name": "Unix timestamp (16 digits)" },
-				{ "value": "RandomAlphanumeric", "name": "Random 6-character alphanumeric ID" },
-				{ "value": "Custom", "name": "A project-specific custom auto-numbering schema" }
-			]
-		},
-		{
-			"key": "option-setting-increment-from-seed",
-			"name": "Specify the first record id. Subsequent ids will increment from this project-wide (even for users in a DAG)",
-			"required": true,
-			"type": "text",
+                { "value": "IncrementFromSeed", "name": "Integer increment from specifed start value" },
+                { "value": "PrefixAndPad", "name": "Padded integer increment with prefix" },
+                { "value": "DAGIncrement", "name": "Increment within DAG using part of DAG name" },
+                { "value": "DateTimeFormat", "name": "Date/time in selected format" },
+                { "value": "Timestamp", "name": "Unix timestamp (16 digits)" },
+                { "value": "RandomAlphanumeric", "name": "Random alphanumeric ID of specified length" },
+                { "value": "Custom", "name": "A project-specific custom auto-numbering schema" }
+            ]
+        },
+        {
+            "key": "option-setting-increment-from-seed",
+            "name": "Specify the first record id. Subsequent ids will increment from this project-wide (even for users in a DAG)",
+            "required": true,
+            "type": "text",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "IncrementFromSeed"
             }
-		},
-		{
-			"key": "option-setting-prefixandpad-prefix",
-			"name": "Specify a fixed prefix (can be blank)",
-			"required": false,
-			"type": "text",
+        },
+        {
+            "key": "option-setting-prefixandpad-prefix",
+            "name": "Specify a fixed prefix (can be blank)",
+            "required": false,
+            "type": "text",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "PrefixAndPad"
             }
-		},
-		{
-			"key": "option-setting-prefixandpad-padlen",
-			"name": "Padding (with zeros) length",
-			"required": true,
-			"type": "dropdown",
+        },
+        {
+            "key": "option-setting-prefixandpad-padlen",
+            "name": "Padding (with zeros) length",
+            "required": true,
+            "type": "dropdown",
             "choices": [
-				{ "value": "1", "name": "1 digit 1 - 9, 10, 11, ..." },
-				{ "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
-				{ "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
-				{ "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
-				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
-				{ "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
+                { "value": "1", "name": "1 digit 1 - 9, 10, 11, ..." },
+                { "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
+                { "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
+                { "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
+                { "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
+                { "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
             ],
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "PrefixAndPad"
             }
-		},
-		{
-			"key": "option-setting-dag-part-len",
-			"name": "Specify the characters to extract from DAG full name",
-			"required": true,
-			"type": "dropdown",
+        },
+        {
+            "key": "option-setting-dag-part-len",
+            "name": "Specify the characters to extract from DAG full name",
+            "required": true,
+            "type": "dropdown",
             "choices": [
-				{ "value": "1", "name": "First character" },
-				{ "value": "2", "name": "First two characters" },
-				{ "value": "3", "name": "First three characters" },
-				{ "value": "4", "name": "First four characters" },
-				{ "value": "5", "name": "First five characters" },
-				{ "value": "6", "name": "First six characters" },
-				{ "value": "-1", "name": "Last character" },
-				{ "value": "-2", "name": "Last two characters" },
-				{ "value": "-3", "name": "Last three characters" },
-				{ "value": "-4", "name": "Last four characters" },
-				{ "value": "-5", "name": "Last five characters" },
-				{ "value": "-6", "name": "Last six characters" },
-				{ "value": "id", "name": "Use Group ID" },
-				{ "value": "un", "name": "Use DAG unique name" }
+                { "value": "1", "name": "First character" },
+                { "value": "2", "name": "First two characters" },
+                { "value": "3", "name": "First three characters" },
+                { "value": "4", "name": "First four characters" },
+                { "value": "5", "name": "First five characters" },
+                { "value": "6", "name": "First six characters" },
+                { "value": "-1", "name": "Last character" },
+                { "value": "-2", "name": "Last two characters" },
+                { "value": "-3", "name": "Last three characters" },
+                { "value": "-4", "name": "Last four characters" },
+                { "value": "-5", "name": "Last five characters" },
+                { "value": "-6", "name": "Last six characters" },
+                { "value": "id", "name": "Use Group ID" },
+                { "value": "un", "name": "Use DAG unique name" }
             ],
-            "branchingLogic": {
-                "field": "autonumber-option",
-                "value": "DAGIncrement"
-            }
-		},
-		{
-			"key": "option-setting-separator",
-			"name": "Specify the character(s) to use as separator between DAG part and incrementing part (e.g. \"-\"; can be blank)",
-			"required": false,
-			"type": "text",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "DAGIncrement"
             }
         },
-		{
-			"key": "option-setting-inc-part-len",
-			"name": "Specify the length of the incrementing part (will begin at 1 and be left-padded with zeros; overflows to additional digits)",
-			"required": true,
-			"type": "dropdown",
+        {
+            "key": "option-setting-separator",
+            "name": "Specify the character(s) to use as separator between DAG part and incrementing part (e.g. \"-\"; can be blank)",
+            "required": false,
+            "type": "text",
+            "branchingLogic": {
+                "field": "autonumber-option",
+                "value": "DAGIncrement"
+            }
+        },
+        {
+            "key": "option-setting-inc-part-len",
+            "name": "Specify the length of the incrementing part (will begin at 1 and be left-padded with zeros; overflows to additional digits)",
+            "required": true,
+            "type": "dropdown",
             "choices": [
-				{ "value": "1", "name": "1 digit 1 - 9, 10, 11, ..." },
-				{ "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
-				{ "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
-				{ "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
-				{ "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
-				{ "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
+                { "value": "1", "name": "1 digit 1 - 9, 10, 11, ..." },
+                { "value": "2", "name": "2 digits 01 - 99, 100, 101, ..." },
+                { "value": "3", "name": "3 digits 001 - 999, 1000, 1001, ..." },
+                { "value": "4", "name": "4 digits 0001 - 9999, 10000, 10001, ..." },
+                { "value": "5", "name": "5 digits 00001 - 99999, 100000, 100001, ..." },
+                { "value": "6", "name": "6 digits 000001 - 999999, 1000000, 1000001, ..." }
             ],
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "DAGIncrement"
             }
-		},
-		{
-			"key": "option-setting-dag-inc-desc",
-			"name": "Examples:<br><br>DAG names: \"Royal Children's RCH\", \"Children's Hospital Westmead CHW\"<br>Settings: Last 3 chars; - separator; 3 incrementing digits<br>Auto-numbering: RCH-001, RCH-002, ...; CHW-001, CHW-002, ...<br><br>DAG names: \"11 RCH\", \"12 CHW\"<br>Settings: First 2 chars; no separator; 4 incrementing digits<br>Auto-numbering: 110001, 110002, ...; 120001, 120002, ...",
-			"type": "descriptive",
+        },
+        {
+            "key": "option-setting-dag-inc-desc",
+            "name": "Examples:<br><br>DAG names: \"Royal Children's RCH\", \"Children's Hospital Westmead CHW\"<br>Settings: Last 3 chars; - separator; 3 incrementing digits<br>Auto-numbering: RCH-001, RCH-002, ...; CHW-001, CHW-002, ...<br><br>DAG names: \"11 RCH\", \"12 CHW\"<br>Settings: First 2 chars; no separator; 4 incrementing digits<br>Auto-numbering: 110001, 110002, ...; 120001, 120002, ...",
+            "type": "descriptive",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "DAGIncrement"
             }
-		},
-		{
-			"key": "option-setting-date-time-format",
-			"name": "Specify the required datetime format using a PHP datetime format string (e.g. \"Y-m-d H:i:s\"; \"YmdHis\") ",
-			"required": true,
-			"type": "text",
+        },
+        {
+            "key": "option-setting-date-time-format",
+            "name": "Specify the required datetime format using a PHP datetime format string (e.g. \"Y-m-d H:i:s\"; \"YmdHis\")",
+            "required": true,
+            "type": "text",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "DateTimeFormat"
             }
-		},
-		{
-			"key": "option-setting-custom-class-name",
-			"name": "File/class name of custom auto-numbering code",
-			"required": true,
-			"type": "text",
+        },
+        {
+            "key": "option-setting-random-alphanumeric",
+            "name": "Specify the number of characters required for record ID length<br><span class=\"text-muted\">(Positive integer, 1 - 99)</span>",
+            "required": true,
+            "type": "text",
+            "validation": "integer",
+            "branchingLogic": {
+                "field": "autonumber-option",
+                "value": "RandomAlphanumeric"
+            }
+        },
+        {
+            "key": "option-setting-custom-class-name",
+            "name": "File/class name of custom auto-numbering code",
+            "required": true,
+            "type": "text",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "Custom"
             }
-		},
-		{
-			"key": "option-setting-custom-params",
-			"name": "Configuration settings for custom auto-numbering class as JSON string.",
-			"required": false,
-			"type": "textarea",
+        },
+        {
+            "key": "option-setting-custom-params",
+            "name": "Configuration settings for custom auto-numbering class as JSON string.",
+            "required": false,
+            "type": "textarea",
             "branchingLogic": {
                 "field": "autonumber-option",
                 "value": "Custom"
             }
-		}
+        }
         ]
 }

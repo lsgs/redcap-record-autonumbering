@@ -49,7 +49,7 @@ class RecordAutonumber extends AbstractExternalModule
             return $this->Proj;
         }
 
-        public function initialise() {
+        public function initialise(bool $instantiate=true) {
                 if (!(defined('PAGE') && defined('PROJECT_ID') && defined('USERID'))) return false;
                 global $Proj, $lang, $user_rights;
                 $this->page = defined('PAGE') ? PAGE : '';
@@ -60,43 +60,47 @@ class RecordAutonumber extends AbstractExternalModule
                 $this->lang = &$lang;
                 $this->user_rights = &$user_rights;
                 $this->autonumberGenerator = null;
-                
-                if ($this->project_id > 0) {
-                        // read all the config options
-                        $settingsArray = $this->getProjectSettings($this->project_id);
-                        $autonumberSettings = array();
 
-                        // only create object when module is actually enabled for project!
-                        if (!($settingsArray['enabled'] || $settingsArray['enabled']['value'])) return;
+                if ($instantiate) $this->instantiateAutoNumberGenerator();
 
-                        try {
-
-                                $autonumberClassName = '';
-                                foreach ($settingsArray as $settingKey => $settingValues) {
-                                        if ($settingKey==='autonumber-option') {
-                                                $autonumberClassName = $settingValues;
-                                        } else if (strpos($settingKey, 'option-setting-')===0) {
-                                                $autonumberSettings[$settingKey] = $settingValues;
-                                        }
-                                }
-
-                                if ($autonumberClassName==='Custom') {
-                                        $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
-                                        unset($autonumberSettings['option-setting-custom-class-name']);
-                                }
-
-                                if ($autonumberClassName!=='') { // ... and is configured
-                                        $this->autonumberGenerator = AutonumberGeneratorFactory::make(
-                                                $autonumberClassName,
-                                                $autonumberSettings,
-                                                $this // give the autonumber generator a reference to the module so can utilise module methods e.g. query()
-                                        );
-                                }
-                        } catch (AutonumberConfigException $e) {
-                                $this->setCrossPageMessage($e->getMessage());
-                        }
-                }
                 return true;
+        }
+
+        public function instantiateAutoNumberGenerator(): void {
+                if (empty($this->project_id)) return;
+
+                // read all the config options
+                $settingsArray = $this->getProjectSettings($this->project_id);
+                $autonumberSettings = array();
+
+                // only create object when module is actually enabled for project!
+                if (!($settingsArray['enabled'] || $settingsArray['enabled']['value'])) return;
+
+                try {
+                        $autonumberClassName = '';
+                        foreach ($settingsArray as $settingKey => $settingValues) {
+                                if ($settingKey==='autonumber-option') {
+                                        $autonumberClassName = $settingValues;
+                                } else if (strpos($settingKey, 'option-setting-')===0) {
+                                        $autonumberSettings[$settingKey] = $settingValues;
+                                }
+                        }
+
+                        if ($autonumberClassName==='Custom') {
+                                $autonumberClassName = $autonumberSettings['option-setting-custom-class-name'];
+                                unset($autonumberSettings['option-setting-custom-class-name']);
+                        }
+
+                        if ($autonumberClassName!=='') { // ... and is configured
+                                $this->autonumberGenerator = AutonumberGeneratorFactory::make(
+                                        $autonumberClassName,
+                                        $autonumberSettings,
+                                        $this // give the autonumber generator a reference to the module so can utilise module methods e.g. query()
+                                );
+                        }
+                } catch (AutonumberConfigException $e) {
+                        $this->setCrossPageMessage($e->getMessage());
+                }
         }
 
         function redcap_module_project_enable($version, $project_id) {
@@ -123,36 +127,45 @@ class RecordAutonumber extends AbstractExternalModule
          * @param int project_id
          */
         public function redcap_every_page_top($project_id) {
-                if (!$this->initialise()) return;
+                if (!$this->initialise(false)) return;
                 if (isset($this->user) && isset($this->project_id) && $this->project_id > 0) {
-                        if (strpos($this->page, 'ProjectSetup/index.php')!==false) {
+                        if ($this->page==='ProjectSetup/index.php') {
+                                $this->instantiateAutoNumberGenerator();
                                 $this->includeProjectSetupPageContent();
-                        } else if (strpos('ExternalModules/manager/project.php', $this->page)!==false) {
-                                $this->includeModuleManagerPageContent();
-                        } else if (strpos('Calendar/scheduling.php', $this->page)!==false) {
-                                $this->includeSchedulingPageContent();
-                        } else if ($this->page==='DataEntry/record_home.php' && isset($_GET['id']) && isset($_GET['auto'])) { 
 
-                            if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
-                                    $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
-                                    $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
-                            } else {
-                                    $armFirstEventId = $this->Proj->firstEventId;
-                                    $armFirstForm = $this->Proj->firstForm;
-                            }
-                            $tempRecId = $this->escape($_GET['id']);
-                            $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
-                            // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
-                            echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
+                        } else if (strpos('ExternalModules/manager/project.php', $this->page)!==false) {
+                                $this->instantiateAutoNumberGenerator();
+                                $this->includeModuleManagerPageContent();
+
+                        } else if ($this->page==='Calendar/scheduling.php') {
+                                $this->instantiateAutoNumberGenerator();
+                                $this->includeSchedulingPageContent();
+
+                        } else if ($this->page==='DataEntry/record_home.php') { 
+                                $this->instantiateAutoNumberGenerator();
+                                if (isset($_GET['id']) && isset($_GET['auto'])) { 
+                                        if (isset($_GET['arm']) && array_key_exists($_GET['arm'], $this->Proj->events)) {
+                                                $armFirstEventId = key($this->Proj->events[$_GET['arm']]['events']);
+                                                $armFirstForm = $this->Proj->eventsForms[$armFirstEventId][0];
+                                        } else {
+                                                $armFirstEventId = $this->Proj->firstEventId;
+                                                $armFirstForm = $this->Proj->firstForm;
+                                        }
+                                        $tempRecId = $this->escape($_GET['id']);
+                                        $gotoUrl = APP_PATH_WEBROOT."DataEntry/index.php?pid={$this->project_id}&id=$tempRecId&event_id=$armFirstEventId&page=$armFirstForm";
+                                        // use javascript to redirect to first form because can't use redirect($loc) due to EM framework exceptions
+                                        echo "<script type=\"text/javascript\">window.location.href=\"$gotoUrl\";</script>"; 
+                                }
                         } else if ($this->page==='DataEntry/record_status_dashboard.php') {
+                                $this->instantiateAutoNumberGenerator();
                                 if ($this->user_rights['record_create'] && !isset($this->autonumberGenerator)) {
                                         $this->disableAddNewRecord();
                                 }
                         }
                         if ($this->crossPageMessageIsSet()) {
                                 $this->includeMessagePopup($this->getCrossPageMessage());
-                                $this->clearCrossPageMessage();
                         }
+                        $this->clearCrossPageMessage();
                 }
         }
 
@@ -252,7 +265,7 @@ class RecordAutonumber extends AbstractExternalModule
         //public function redcap_save_record($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance) {
         //}
         
-        protected function recordExists($recId) {
+        public function recordExists($recId) {
                 if (is_null($recId)) { return false; }
                 return count(REDCap::getData('array', $recId))>0;
         }
