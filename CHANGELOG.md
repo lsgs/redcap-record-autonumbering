@@ -2,6 +2,9 @@
 All notable changes to the Record Autonumbering module will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.0] - 2026-02-12
+- New auto-numbering option RandomAlphanumeric (Philip Chase)
+
 ## [1.0.8] - 2026-01-06
 - Improved config validation including check of custom record format against record id field validation type
 - Display config validation errors in red highlight on project Module page
