@@ -40,10 +40,10 @@ This module introduces a range of additional options, such as having the first r
 1. **Unix timestamp (16 digits)**: This option will create a record ID based upon a Unix timestamp. A Unix timestamp is the number of seconds since January 1st, 1970 (UTC).
   - See: <https://www.unixtimestamp.com/> for more information about Unix timestamps.
 
-1. **Random 6-character alphanumeric ID**: This option generates a random 6-character alphanumeric string for each new record ID. The character set excludes ambiguous characters (I, O, 0, 1) to improve readability.
+1. **Random alphanumeric ID**: This option generates a random alphanumeric string for each new record ID. Specify the length required in the configuration settings (1 to 99 characters). The character set excludes ambiguous characters (I, O, 0, 1) to improve readability.
   - Example IDs: `A7K2M9`, `X3PB5N`, `H8QR4T`
   - This is useful when you need non-sequential, non-guessable record IDs for privacy or blinding purposes.
-  - _Note_: While collisions are statistically unlikely (over 700 million possible combinations), the module will generate a new ID if a collision is detected.
+  - _Note_: Generated IDs are checked for uniqueness within the project and the module will generate a new ID if a collision is detected.
 
 1. **A project-specific custom auto-numbering schema**: The module design supports the addition of novel auto-numbering schemes via custom code. This is an advanced feature for module developers.
 
