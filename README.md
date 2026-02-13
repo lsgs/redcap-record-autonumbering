@@ -28,22 +28,22 @@ This module introduces a range of additional options, such as having the first r
     - This is useful when you want your first record ID to start with any integer besides 1, including padding the 1 to become 001.
 
 1. **Padded integer increment with prefix**: This option allows users to specify a prefix to the project's record IDs and configure the padding length, prepending the ID with zeros to achieve the desired length. Subsequent record IDs will increment from this project-wide (even for users in a DAG).
-  - This is useful when you want you need to create study-specific record IDs, such as ABC-001, ABC-002, ABC-003, etc.
+    - This is useful when you want you need to create study-specific record IDs, such as ABC-001, ABC-002, ABC-003, etc.
 
 1. **Increment within DAG using part of the DAG name**: This option lets users create a DAG-specific prefix to the record IDs in the project, when DAGs are used in a project. This option gives users the ability to use 1-5 characters from the beginning or the end of the DAG as part of the record ID.
-  - This is useful when you need to create DAG-specific record IDs, such as UFL-1, UFL-2, UW-1, UW-2, USF-1, USF-2, etc.
-  - _Useful tip_: if you want the prefixed DAG ID to be "UFL" you can name the DAG "University of Florida UFL" and specify you want the last 3 letters of the DAG name to be used in the prefix.
+    - This is useful when you need to create DAG-specific record IDs, such as UFL-1, UFL-2, UW-1, UW-2, USF-1, USF-2, etc.
+    - _Useful tip_: if you want the prefixed DAG ID to be "UFL" you can name the DAG "University of Florida UFL" and specify you want the last 3 letters of the DAG name to be used in the prefix.
 
 1. **Date/time in selected format**: This option will create a record ID based upon the date and time a record was created.
     - _Note_: Since dates are PHI, do not use this option if all data is supposed to be de-identified.
 
 1. **Unix timestamp (16 digits)**: This option will create a record ID based upon a Unix timestamp. A Unix timestamp is the number of seconds since January 1st, 1970 (UTC).
-  - See: <https://www.unixtimestamp.com/> for more information about Unix timestamps.
+    - See: <https://www.unixtimestamp.com/> for more information about Unix timestamps.
 
 1. **Random alphanumeric ID**: This option generates a random alphanumeric string for each new record ID. Specify the length required in the configuration settings (1 to 99 characters). The character set excludes ambiguous characters (I, O, 0, 1) to improve readability.
-  - Example IDs: `A7K2M9`, `X3PB5N`, `H8QR4T`
-  - This is useful when you need non-sequential, non-guessable record IDs for privacy or blinding purposes.
-  - _Note_: Generated IDs are checked for uniqueness within the project and the module will generate a new ID if a collision is detected.
+    - Example IDs: `A7K2M9`, `X3PB5N`, `H8QR4T`
+    - This is useful when you need non-sequential, non-guessable record IDs for privacy or blinding purposes.
+    - _Note_: Generated IDs are checked for uniqueness within the project and the module will generate a new ID if a collision is detected.
 
 1. **A project-specific custom auto-numbering schema**: The module design supports the addition of novel auto-numbering schemes via custom code. This is an advanced feature for module developers.
 
