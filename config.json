@@ -86,24 +86,29 @@
         },
         {
             "key": "option-setting-dag-part-len",
-            "name": "Specify the characters to extract from DAG full name",
+            "name": "Specify the characters to extract from full DAG label",
             "required": true,
             "type": "dropdown",
             "choices": [
-                { "value": "1", "name": "First character" },
-                { "value": "2", "name": "First two characters" },
-                { "value": "3", "name": "First three characters" },
-                { "value": "4", "name": "First four characters" },
-                { "value": "5", "name": "First five characters" },
-                { "value": "6", "name": "First six characters" },
-                { "value": "-1", "name": "Last character" },
-                { "value": "-2", "name": "Last two characters" },
-                { "value": "-3", "name": "Last three characters" },
-                { "value": "-4", "name": "Last four characters" },
-                { "value": "-5", "name": "Last five characters" },
-                { "value": "-6", "name": "Last six characters" },
-                { "value": "id", "name": "Use Group ID" },
-                { "value": "un", "name": "Use DAG unique name" }
+				{ "value": "1", "name": "First character" },
+				{ "value": "2", "name": "First two characters" },
+				{ "value": "3", "name": "First three characters" },
+				{ "value": "4", "name": "First four characters" },
+				{ "value": "5", "name": "First five characters" },
+				{ "value": "6", "name": "First six characters" },
+				{ "value": "8", "name": "First eight characters" },
+				{ "value": "10", "name": "First ten characters" },
+				{ "value": "-1", "name": "Last character" },
+				{ "value": "-2", "name": "Last two characters" },
+				{ "value": "-3", "name": "Last three characters" },
+				{ "value": "-4", "name": "Last four characters" },
+				{ "value": "-5", "name": "Last five characters" },
+				{ "value": "-6", "name": "Last six characters" },
+				{ "value": "-8", "name": "Last eight characters" },
+				{ "value": "-10", "name": "Last ten characters" },
+				{ "value": "999", "name": "Full DAG label" },
+				{ "value": "id", "name": "Use Group ID" },
+				{ "value": "un", "name": "Use DAG unique name" }
             ],
             "branchingLogic": {
                 "field": "autonumber-option",
@@ -188,5 +193,5 @@
                 "value": "Custom"
             }
         }
-        ]
+    ]
 }
