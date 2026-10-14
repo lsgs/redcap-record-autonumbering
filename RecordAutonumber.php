@@ -267,7 +267,7 @@ class RecordAutonumber extends AbstractExternalModule
         
         public function recordExists($recId) {
                 if (is_null($recId)) { return false; }
-                return count(REDCap::getData('array', $recId))>0;
+                return count(REDCap::getData('array', $recId, REDCap::getRecordIdField()))>0;
         }
         
         protected function getNextRecordId() {

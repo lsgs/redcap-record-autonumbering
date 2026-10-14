@@ -66,15 +66,18 @@ class PrefixAndPad extends AbstractAutonumberGenerator {
                         return $this->prefix.sprintf('%0'.$this->padlen.'d', 1);
                 }
 
-                // sort array of record ids and find max recordPart to increment
-                ksort($prefixedRecords);
-                end($prefixedRecords);
-                $lastRecordPart = intval(str_replace($this->prefix, '', key($prefixedRecords)));
+                // iterate existing records to find max padded part to increment (may not be all same length, so can't do string sort with prefixes - "P-2" > "P-10")
+                $lastRecordPart = 0;
+                foreach (array_keys($prefixedRecords) as $thisRec) {
+                        $recordPart = intval(str_replace($this->prefix, '', $thisRec));
+                        if ($recordPart > $lastRecordPart) {
+                                $lastRecordPart = $recordPart;
+                        }
+                }
 
                 do {
                         $newRecordId = $this->prefix.sprintf('%0'.$this->padlen.'d', ++$lastRecordPart);
-                        $checkRecord = REDCap::getData('array',$newRecordId,$pkField);
-                } while (count($checkRecord)>0) ;
+                } while ($this->module->recordExists($newRecordId)); // until not exists, new
 
                 return $newRecordId;
         }
